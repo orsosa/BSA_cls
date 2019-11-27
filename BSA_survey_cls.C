@@ -64,17 +64,14 @@ void BSA_survey_cls::Loop()
 
       for (auto& x: bedg){
 	TString bn = x.first;
+	brv[bn]->GetNdata();
 	for (int n=0;n<x.second.size()-1;n++){
 	  TString hname = pltv + "_" + bn + Form("_b%d",n);
+	  TString hnamepip = "phiH_" + bn + Form("_b%d",n);
 	  TString ttlsuf =  Form("%.2f<%s<%.2f",x.second[n], bn.Data(), x.second[n+1]);
-	  std::cout<<x.second[n]<<"<"<<pdata_phiHs[k][0]<<"<"<<x.second[n+1]<<std::endl;
-	  if (x.second[n] < brv[bn][k]&& brv[bn][k]< x.second[n+1]){
-	    if (helic == -1) 
-	      ofile->GetObject("hp_"+ hname,h);
-	    else if(helic == 1)
-	      ofile->GetObject("hn_"+ hname,h);
-	    h->Fill(pdata_phiHs[k][0]);
-	    std::cout<<x.second[n]<<"<"<<pdata_phiHs[k][0]<<"<"<<x.second[n+1]<<std::endl;
+	  if (x.second[n] < brv[bn]->EvalInstance(k)&& brv[bn]->EvalInstance(k)< x.second[n+1]){
+	    fillHist(hnamepip,pdata_phiHs[k][0]);
+	    fillHist(hname,phiR[k]);
 	    break;
 	  }
 	}
@@ -87,15 +84,25 @@ void BSA_survey_cls::Loop()
     std::cout.flush();
       
   }
-
-  std::cout<<getALU("hp_phiR","hn_phiR",pltv,ttlv)<<std::endl;
-  std::cout<<getALU("hp_phiH","hn_phiH","phiH","#phi_{H}")<<std::endl;
+  TH1D *h;
+  Float_t val,err;
+  std::cout<<getALU("hp_phiR","hn_phiR",pltv,ttlv,val,err)<<std::endl;
+  std::cout<<getALU("hp_phiH","hn_phiH","phiH","#phi_{H}",val,err)<<std::endl;
   for (auto& x: bedg){
     TString bn = x.first;
     for (int k=0;k<x.second.size()-1;k++){
       TString hname = pltv + "_" + bn + Form("_b%d",k);
+      TString hnamepip = "phiH_" + bn + Form("_b%d",k);
       TString ttlsuf =  Form("%.2f<%s<%.2f",x.second[k], bn.Data(), x.second[k+1]);
-      std::cout<<getALU("hp_"+ hname,"hn_"+ hname,"phiH","#phi_{H}")<<std::endl;
+      getALU("hp_"+ hname,"hn_"+ hname, hname, ttlv + ", (" + ttlsuf + ")",val,err);
+      ofile->GetObject("hALU_"+pltv + "_" + bn,h);
+      h->SetBinContent(k+1,val);
+      h->SetBinError(k+1,err);
+      getALU("hp_"+ hnamepip,"hn_"+ hnamepip, hnamepip, "#phi_{H}, (" + ttlsuf  + ")",val,err);
+      ofile->GetObject("hALU_phiH_" + bn,h);
+      h->SetBinContent(k+1,val);
+      h->SetBinError(k+1,err);
+
     }
   }
   
@@ -180,7 +187,7 @@ Bool_t BSA_survey_cls::CF(int k)
 
 }
 
-Float_t BSA_survey_cls::getALU(TString hpname, TString hnname, TString pv, TString tv){
+Float_t BSA_survey_cls::getALU(TString hpname, TString hnname, TString pv, TString tv, Float_t &val, Float_t &err){
   TH1D *hp,*hn, *hs, *hm, *hALU;
   TFitResultPtr res;
   TF1 *ff = new TF1("ff"," [A]*sin(x*TMath::DegToRad())",0,360);
@@ -198,5 +205,19 @@ Float_t BSA_survey_cls::getALU(TString hpname, TString hnname, TString pv, TStri
   hALU->Divide(hm,hs);
   ff->SetParameter(0,0.01);
   res = hALU->Fit(ff,"Rs+");
+  val = ff->GetParameter(0);
+  err = ff->GetParError(0);
   return ff->GetParameter(0);
+}
+
+Int_t BSA_survey_cls::fillHist(TString hname, Float_t value){
+  TH1D *h;
+  if (helic == -1) 
+    ofile->GetObject("hp_"+ hname,h);
+  else if(helic == 1)
+    ofile->GetObject("hn_"+ hname,h);
+  else
+    return 1;
+  h->Fill(value);
+  return 0;
 }

@@ -51,7 +51,7 @@ class BSA_survey_cls {
   vector <Double_t> *be = 0;
   TString pltv = "", ttlv = "";  
   std::map<TString, std::vector <Double_t>> bedg;
-  std::map<TString, Float_t[kMaxpdata]> brv;
+  std::map<TString, TTreeFormula *> brv;
 
   
   // Declaration of leaf types
@@ -689,7 +689,8 @@ class BSA_survey_cls {
   virtual Bool_t   FWD(int k = 0);
   virtual Bool_t   CF(int k = 0);
   virtual Int_t    GetEntry(Long64_t entry);
-  virtual Float_t  getALU(TString hpname="hp_phiR", TString hnname="hn_phiR", TString pv="phiR", TString tv="#phi_{R#perp}");
+  virtual Float_t  getALU(TString hpname, TString hnname, TString pv, TString tv, Float_t &val, Float_t &err);
+  virtual Int_t  fillHist(TString hname, Float_t value = -111111);
   virtual Long64_t LoadTree(Long64_t entry);
   virtual void     Init(TTree *tree, TString binfo);
   virtual void     Loop();
@@ -758,75 +759,6 @@ void BSA_survey_cls::Init(TTree *tree,TString binfo)
   fChain = tree;
   fCurrent = -1;
   fChain->SetMakeClass(1);
-  OUTDIR = "";
-  
-  Float_t PB = 0.8366;
-
-  ///// Setting bins and output dir ////
-  
-  std::ifstream bf(binfo);
-  TString line;
-  char cln[100];
-  bf.getline(cln,100);
-  bf>>pltv>>ttlv;
-  std::cout<<"plot var: " + pltv + ", title_var: " + ttlv<<std::endl;
-  while (bf.getline(cln,100)){
-    line = cln;
-    line.ReplaceAll("\t"," ");
-    line = line.Strip();
-    if ( line[0]=='#' || line.Length() == 0) continue;
-    TString tok="";
-    Ssiz_t frm=0;
-    line.Tokenize(tok,frm);
-    TString bn = tok;
-    std::cout<<bn<<std::endl;
-    fChain->SetBranchAddress(bn,brv[bn]);
-    OUTDIR += bn.ReplaceAll("(","_").ReplaceAll(")","_");
-    while(line.Tokenize(tok,frm)){
-      bedg[bn].push_back(atof(tok));
-    }
-  }
-
-  OUTDIR += "_bins";
-
-  time_t timestmp;
-  time(&timestmp);
-  
-  struct tm *lt = localtime(&timestmp);
-  TString date = Form("%02d%02d%02d_%02d%02d%02d",lt->tm_year%100,lt->tm_mon+1,lt->tm_mday,lt->tm_hour,lt->tm_min,lt->tm_sec);
-
-  OUTDIR += Form("_%02d%02d%02d",lt->tm_year%100,lt->tm_mon+1,lt->tm_mday);
-  system("mkdir " + OUTDIR + " 2>/dev/null");
-
-  ///// end Setting bins and output dir ////
-  
-  ofile = new TFile(OUTDIR + "/BSA_results.root","recreate");
-  Int_t Nb_phi = 12;
-  Float_t min_phi = 0, max_phi = 360;
-  
-  ofile->Add(new TH1D("hM","#pi^{+}#pi^{-} : IM",300,0,3));
-
-  ofile->Add(new TH1D("hp_phiR","#pi^{+}#pi^{-} : #phi_{R#perp} (#lambda = +1)",Nb_phi, min_phi, max_phi));
-  ofile->Add(new TH1D("hn_phiR","#pi^{+}#pi^{-} : #phi_{R#perp} (#lambda = -1)",Nb_phi, min_phi, max_phi));
-
-  ofile->Add(new TH1D("hp_phiH","#pi^{+} : #phi_{H} (#lambda = +1)",Nb_phi, min_phi, max_phi));
-  ofile->Add(new TH1D("hn_phiH","#pi^{+} : #phi_{H} (#lambda = -1)",Nb_phi, min_phi, max_phi));
-
-  for (auto& x: bedg){
-    TString bn = x.first;
-    for (int k=0;k<x.second.size()-1;k++){
-      TString hname = pltv + "_" + bn + Form("_b%d",k);
-      TString ttlsuf =  Form("%.2f<%s<%.2f",x.second[k], bn.Data(), x.second[k+1]);
-      ofile->Add(new TH1D("hp_"+ hname, "#pi^{+}#pi^{-} : " + ttlv + " (#lambda = +1," + ttlsuf,Nb_phi, min_phi, max_phi));
-      ofile->Add(new TH1D("hn_"+ hname, "#pi^{+}#pi^{-} : " + ttlv + " (#lambda = -1," + ttlsuf,Nb_phi, min_phi, max_phi));
-
-      ofile->Add(new TH1D("hp_phiH_" + bn + Form("_b%d",k),"#pi^{+} : #phi_{H} (#lambda = +1," + ttlsuf,Nb_phi, min_phi, max_phi));
-      ofile->Add(new TH1D("hn_phiH_" + bn + Form("_b%d",k),"#pi^{+} : #phi_{H} (#lambda = -1," + ttlsuf,Nb_phi, min_phi, max_phi));
-    }
-  
-  }
-  
-  ///// end REC data ////
   
   fChain->SetBranchAddress("npart", &npart, &b_npart);
   fChain->SetBranchAddress("M", M, &b_M);
@@ -1138,6 +1070,94 @@ void BSA_survey_cls::Init(TTree *tree,TString binfo)
   fChain->SetBranchAddress("mc_fC", &mc_fC, &b_mc_fC);
   fChain->SetBranchAddress("mc_fV", &mc_fV, &b_mc_fV);
   fChain->SetBranchAddress("mc_fW", &mc_fW, &b_mc_fW);
+
+  OUTDIR = "";
+  
+  ///// Setting bins and output dir ////
+  
+  std::ifstream bf(binfo);
+  TString line;
+  char cln[100];
+  bf.getline(cln,100);
+  bf>>pltv>>ttlv;
+  fChain->GetEntries();
+  std::cout<<"#### Entries to be processed "<<  fChain->GetEntries()<<" ###"<<std::endl;
+  std::cout<<"#### binning configuration ####"<<std::endl;
+  std::cout<<"plot var: " + pltv + ", title_var: " + ttlv<<std::endl;
+  while (bf.getline(cln,100)){
+    line = cln;
+    line.ReplaceAll("\t"," ");
+    line = line.Strip();
+    if ( line[0]=='#' || line.Length() == 0) continue;
+    TString tok="";
+    Ssiz_t from=0;
+    line.Tokenize(tok,from);
+    TString bn = tok;
+    line.Tokenize(tok,from);
+    TString bfrm = tok;
+    std::cout<<bn<<" : "<<bfrm<<"\t";
+    brv[bn] = new TTreeFormula(bn,bfrm,fChain);
+    //    brv[bn] = (Float_t *)(fChain->GetBranch(bn))->GetAddress();
+
+    OUTDIR += bn.ReplaceAll("(","_").ReplaceAll(")","_");
+    while(line.Tokenize(tok,from)){
+      bedg[bn].push_back(atof(tok));
+      std::cout<<atof(tok)<<"\t";
+    }
+    std::cout<<"\n";
+  }
+
+  OUTDIR += "_bins";
+
+  time_t timestmp;
+  time(&timestmp);
+  
+  struct tm *lt = localtime(&timestmp);
+  TString date = Form("%02d%02d%02d_%02d%02d%02d",lt->tm_year%100,lt->tm_mon+1,lt->tm_mday,lt->tm_hour,lt->tm_min,lt->tm_sec);
+
+  OUTDIR += Form("_%02d%02d%02d",lt->tm_year%100,lt->tm_mon+1,lt->tm_mday);
+  system("mkdir " + OUTDIR + " 2>/dev/null");
+
+  ///// end Setting bins and output dir ////
+  
+  ofile = new TFile(OUTDIR + "/BSA_results.root","recreate");
+  Int_t Nb_phi = 12;
+  Float_t min_phi = 0, max_phi = 360;
+  
+  ofile->Add(new TH1D("hM","#pi^{+}#pi^{-} : IM",300,0,3));
+
+  ofile->Add(new TH1D("hp_phiR","#pi^{+}#pi^{-} : #phi_{R#perp} (#lambda = +1)",Nb_phi, min_phi, max_phi));
+  ofile->Add(new TH1D("hn_phiR","#pi^{+}#pi^{-} : #phi_{R#perp} (#lambda = -1)",Nb_phi, min_phi, max_phi));
+
+  ofile->Add(new TH1D("hp_phiH","#pi^{+} : #phi_{H} (#lambda = +1)",Nb_phi, min_phi, max_phi));
+  ofile->Add(new TH1D("hn_phiH","#pi^{+} : #phi_{H} (#lambda = -1)",Nb_phi, min_phi, max_phi));
+
+  std::cout<<"#######\nALU histograms : "<<std::endl;
+      
+  for (auto& x: bedg){
+    TString bn = x.first;
+    for (int k=0;k<x.second.size()-1;k++){
+      TString hname = pltv + "_" + bn + Form("_b%d",k);
+      TString hnamepip = "phiH_" + bn + Form("_b%d",k);
+      TString ttlsuf =  Form("%.2f<%s<%.2f",x.second[k], bn.Data(), x.second[k+1]);
+      ofile->Add(new TH1D("hp_"+ hname, "#pi^{+}#pi^{-} : " + ttlv + " (#lambda = +1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi));
+      ofile->Add(new TH1D("hn_"+ hname, "#pi^{+}#pi^{-} : " + ttlv + " (#lambda = -1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi));
+
+      ofile->Add(new TH1D("hp_" + hnamepip,"#pi^{+} : #phi_{H} (#lambda = +1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi));
+      ofile->Add(new TH1D("hn_" + hnamepip,"#pi^{+} : #phi_{H} (#lambda = -1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi));
+    }
+
+    /// ALU histos
+    std::cout<<bn<<" : "<<brv[bn]->GetExpFormula()<<std::endl;
+
+    ofile->Add(new TH1D("hALU_"+pltv + "_" + bn,"ALU^{sin(" + ttlv+ ")}",x.second.size()-1,x.second.data()));
+    ofile->Add(new TH1D("hALU_phiH_" + bn,"ALU^{sin(#phi_{H})}",x.second.size()-1,x.second.data()));
+     
+    /// end ALU
+  }
+  
+  ///// end REC data ////
+  
   Notify();
 }
 
