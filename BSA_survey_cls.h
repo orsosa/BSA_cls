@@ -42,7 +42,7 @@ class BSA_survey_cls {
   TFile *ofile;
   TChain          *fChain;   //!pointer to the analyzed TTree or TChain
   Int_t           fCurrent; //!current Tree number in a TChain
-
+  TStyle *myStyle;
   // Fixed size dimensions of array or collections stored in the TTree if any.
   static constexpr Int_t kMaxdet = 50;
   static constexpr Int_t kMaxpdata = 50;
@@ -699,6 +699,7 @@ class BSA_survey_cls {
   virtual Int_t   fillHist(TString hname, Float_t value = -111111);
   virtual Int_t   fillHist2D(TString hname, Float_t x, Float_t y);
   virtual Int_t   configHisto(TH1D *h, TString xtitle, TString ytitle,Color_t c = kBlack, EMarkerStyle ms = kFullDotLarge);
+  virtual Int_t   setStyle();
   virtual Long64_t LoadTree(Long64_t entry);
   virtual void    Init(TChain *tree, TString binfo);
   virtual void    Loop();
@@ -711,7 +712,6 @@ class BSA_survey_cls {
 #ifdef BSA_survey_cls_cxx
 BSA_survey_cls::BSA_survey_cls(TString infile, TString binfo) : fChain(0) 
 {
-  gROOT->SetStyle("orsosaStyle");
   TChain *tch = new TChain();
   // if parameter tree is not specified (or zero), connect the file
   // used to generate this class and read the Tree.
@@ -768,6 +768,7 @@ void BSA_survey_cls::Init(TChain *tree,TString binfo)
   bm->Start("main");
   // Set branch addresses and branch pointers
   if (!tree) return;
+  setStyle();
   fChain = tree;
   fCurrent = -1;
   fChain->SetMakeClass(1);

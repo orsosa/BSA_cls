@@ -324,3 +324,62 @@ Int_t BSA_survey_cls::configHisto(TH1D *h, TString xtitle, TString ytitle, Color
   return 0;
   
 }
+
+Int_t BSA_survey_cls::setStyle(){
+
+  myStyle  = new TStyle("orsosaStyle","My Root Styles");
+  myStyle->SetHistMinimumZero(0);
+  myStyle->SetPalette(1,0);
+  //myStyle->SetPalette(kBlueYellow);
+  myStyle->SetCanvasBorderMode(0);
+  myStyle->SetPadBorderMode(0);
+  myStyle->SetPadColor(0);
+  myStyle->SetCanvasColor(0);
+  myStyle->SetTitleFillColor(0);
+  myStyle->SetTitleBorderSize(0);
+
+  myStyle->SetStatColor(0);
+  myStyle->SetOptStat("e");
+
+  myStyle->SetLabelSize(0.05,"xyz"); // size of axis value font
+  myStyle->SetTitleSize(0.05,"xyz"); // size of axis title font
+  myStyle->SetTitleOffset(0.75,"xyz"); // axis title offset 
+  myStyle->SetTitleFont(22,"xyz"); // font option
+  myStyle->SetTitleFont(22,"a"); // pad font option
+  myStyle->SetLabelFont(22,"xyz");
+
+
+  myStyle->SetLabelSize(0.02,"z"); // size of axis value font
+  myStyle->SetLabelOffset(-0.03,"z"); // size of axis value font
+  myStyle->SetTickLength(0.002,"z"); // size of axis value font
+
+  
+  // Stat and legend fonts
+  myStyle->SetStatFont(22); 
+  myStyle->SetLegendFont(22); 
+  // hiostogram style
+  myStyle->SetHistLineWidth(2);
+  myStyle->SetCanvasDefH(768);
+  myStyle->SetCanvasDefW(1024);
+
+  myStyle->SetPadBottomMargin(0.1);
+  myStyle->SetPadTopMargin(0.1);
+  myStyle->SetPadLeftMargin(0.1);
+  myStyle->SetPadRightMargin(0.075);
+
+  myStyle->SetPadTickX(1);
+  myStyle->SetPadTickY(1);
+
+  myStyle->SetFrameBorderMode(0);
+  
+  myStyle->SetGridStyle(3);
+  myStyle->SetGridWidth(2);
+  myStyle->SetPadGridX(kTRUE);
+  myStyle->SetPadGridY(kTRUE);
+
+  
+  gROOT->SetStyle("orsosaStyle"); //uncomment to set this style
+ 
+  
+  return 0;
+}
