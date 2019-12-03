@@ -32,7 +32,7 @@ void BSA_survey_cls::Loop()
 
   std::cout<<"processing...\n";
   std::cout.fill('.');
-   
+  std::cout<<"# trees to be processed: "<<fChain->GetNtrees()<<std::endl; 
   Long64_t nentries = fChain->GetEntries();
 
   Long64_t nbytes = 0, nb = 0;
@@ -55,12 +55,12 @@ void BSA_survey_cls::Loop()
 	ofile->GetObject("hn_phiR",h);
       h->Fill(phiR[k]);
 
+      
       if (helic == -1) 
 	ofile->GetObject("hp_phiH",h);
       else if(helic == 1)
 	ofile->GetObject("hn_phiH",h);
       h->Fill(pdata_phiHs[k][0]);
-
       for (auto& x: bedg){
 	TString bn = x.first;
 	brv[bn]->GetNdata();
@@ -70,6 +70,7 @@ void BSA_survey_cls::Loop()
 	  TString hsin = "hsin" + pltv + "_" + bn;
 	  TString hsinpip = "hsinphiH_" + bn;
 	  TString ttlsuf =  Form("%.2f<%s<%.2f",x.second[n], bn.Data(), x.second[n+1]);
+
 	  if (x.second[n] < brv[bn]->EvalInstance(k) && brv[bn]->EvalInstance(k)< x.second[n+1]){
 	    fillHist(hnamepip,pdata_phiHs[k][0]);
 	    fillHist(hname,phiR[k]);
@@ -80,13 +81,11 @@ void BSA_survey_cls::Loop()
 	  }
 	}
       }
-
     }
-
     // if (Cut(ientry) < 0) continue;
     std::cout<<std::setw(15)<<float(jentry+1)/nentries*100<<" %"<<"\r";
     std::cout.flush();
-      
+    
   }
   TH1D *h;
   Float_t val,err;

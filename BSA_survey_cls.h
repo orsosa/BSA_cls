@@ -40,7 +40,7 @@ class BSA_survey_cls {
   TBenchmark *bm;
   TString OUTDIR;
   TFile *ofile;
-  TTree          *fChain;   //!pointer to the analyzed TTree or TChain
+  TChain          *fChain;   //!pointer to the analyzed TTree or TChain
   Int_t           fCurrent; //!current Tree number in a TChain
 
   // Fixed size dimensions of array or collections stored in the TTree if any.
@@ -700,7 +700,7 @@ class BSA_survey_cls {
   virtual Int_t   fillHist2D(TString hname, Float_t x, Float_t y);
   virtual Int_t   configHisto(TH1D *h, TString xtitle, TString ytitle,Color_t c = kBlack, EMarkerStyle ms = kFullDotLarge);
   virtual Long64_t LoadTree(Long64_t entry);
-  virtual void    Init(TTree *tree, TString binfo);
+  virtual void    Init(TChain *tree, TString binfo);
   virtual void    Loop();
   virtual Bool_t  Notify();
   virtual void    Show(Long64_t entry = -1);
@@ -711,6 +711,7 @@ class BSA_survey_cls {
 #ifdef BSA_survey_cls_cxx
 BSA_survey_cls::BSA_survey_cls(TString infile, TString binfo) : fChain(0) 
 {
+  gROOT->SetStyle("orsosaStyle");
   TChain *tch = new TChain();
   // if parameter tree is not specified (or zero), connect the file
   // used to generate this class and read the Tree.
@@ -746,11 +747,14 @@ Long64_t BSA_survey_cls::LoadTree(Long64_t entry)
   if (fChain->GetTreeNumber() != fCurrent) {
     fCurrent = fChain->GetTreeNumber();
     Notify();
+    for (auto& x: brv){
+      x.second->UpdateFormulaLeaves();
+    }
   }
   return centry;
 }
 
-void BSA_survey_cls::Init(TTree *tree,TString binfo)
+void BSA_survey_cls::Init(TChain *tree,TString binfo)
 {
   // The Init() function is called when the selector needs to initialize
   // a new tree or chain. Typically here the branch addresses and branch
@@ -1092,6 +1096,7 @@ void BSA_survey_cls::Init(TTree *tree,TString binfo)
   std::cout<<"#### Entries to be processed "<<  fChain->GetEntries()<<" ###"<<std::endl;
   std::cout<<"#### binning configuration ####"<<std::endl;
   std::cout<<"plot var: " + pltv + ", title_var: " + ttlv<<std::endl;
+  fChain->LoadTree(0);
   while (bf.getline(cln,500)){
     line = cln;
     line.ReplaceAll("\t"," ");
@@ -1105,6 +1110,7 @@ void BSA_survey_cls::Init(TTree *tree,TString binfo)
     TString bfrm = tok;
     std::cout<<bn<<" : "<<bfrm<<"\t";
     brv[bn] = new TTreeFormula(bn,bfrm,fChain);
+    fChain->SetNotify(brv[bn]);
     //    brv[bn] = (Float_t *)(fChain->GetBranch(bn))->GetAddress();
 
     OUTDIR += bn.ReplaceAll("(","_").ReplaceAll(")","_");
@@ -1114,7 +1120,6 @@ void BSA_survey_cls::Init(TTree *tree,TString binfo)
     }
     std::cout<<"\n";
   }
-
   OUTDIR += "_bins";
 
   time_t timestmp;
