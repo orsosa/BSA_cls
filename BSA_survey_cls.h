@@ -29,6 +29,7 @@
 #include "TLegendEntry.h"
 #include "TCanvas.h"
 #include "TFile.h"
+#include "TTreeFormula.h"
 
 // Header file for the classes stored in the TTree if any.
 #include "TClonesArray.h"
@@ -46,9 +47,11 @@ class BSA_survey_cls {
   static constexpr Int_t kMaxdet = 50;
   static constexpr Int_t kMaxpdata = 50;
   static constexpr Int_t kMaxmc_pdata = 50;
+  static constexpr Float_t minALU = -0.15;
+  static constexpr Float_t maxALU = 0.15;
 
   //// bin variables
-  vector <Double_t> *be = 0;
+  std::vector <Double_t> *be = 0;
   TString pltv = "", ttlv = "";  
   std::map<TString, std::vector <Double_t>> bedg;
   std::map<TString, TTreeFormula *> brv;
@@ -680,22 +683,27 @@ class BSA_survey_cls {
 
   BSA_survey_cls(TString infile = "", TString binfo = "binning_info.txt");
   virtual ~BSA_survey_cls();
-  virtual Int_t    Cut(Long64_t entry);
-  virtual Bool_t   DIS();
-  virtual Bool_t   eFID_ec();
-  virtual Bool_t   eFID_dc();
-  virtual Bool_t   piFID_ec(int k = 0);
-  virtual Bool_t   piFID_dc(int k = 0);
-  virtual Bool_t   FWD(int k = 0);
-  virtual Bool_t   CF(int k = 0);
-  virtual Int_t    GetEntry(Long64_t entry);
-  virtual Float_t  getALU(TString hpname, TString hnname, TString pv, TString tv, Float_t &val, Float_t &err);
-  virtual Int_t  fillHist(TString hname, Float_t value = -111111);
+  virtual Int_t   Cut(Long64_t entry);
+  virtual Bool_t  DIS();
+  virtual Bool_t  eFID_ec();
+  virtual Bool_t  eFID_dc();
+  virtual Bool_t  piFID_ec(int k = 0);
+  virtual Bool_t  pipFID_dc(int k = 0);
+  virtual Bool_t  pimFID_dc(int k = 0);
+  virtual Bool_t  FWD(int k = 0);
+  virtual Bool_t  CF(int k = 0);
+  virtual Int_t   GetEntry(Long64_t entry);
+  virtual Float_t getALU(TString hpname, TString hnname, TString pv, TString tv, Float_t &val, Float_t &err);
+  virtual Float_t getALU2D(TString bn);
+    
+  virtual Int_t   fillHist(TString hname, Float_t value = -111111);
+  virtual Int_t   fillHist2D(TString hname, Float_t x, Float_t y);
+  virtual Int_t   configHisto(TH1D *h, TString xtitle, TString ytitle,Color_t c = kBlack, EMarkerStyle ms = kFullDotLarge);
   virtual Long64_t LoadTree(Long64_t entry);
-  virtual void     Init(TTree *tree, TString binfo);
-  virtual void     Loop();
-  virtual Bool_t   Notify();
-  virtual void     Show(Long64_t entry = -1);
+  virtual void    Init(TTree *tree, TString binfo);
+  virtual void    Loop();
+  virtual Bool_t  Notify();
+  virtual void    Show(Long64_t entry = -1);
 };
 
 #endif
@@ -1147,13 +1155,23 @@ void BSA_survey_cls::Init(TTree *tree,TString binfo)
       ofile->Add(new TH1D("hn_" + hnamepip,"#pi^{+} : #phi_{H} (#lambda = -1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi));
     }
 
+    /// 2D histos ///
+
+    ofile->Add(new TH2D("hsin"+pltv + "_" + bn + "_p","sin(" + ttlv +") vs " + bn,x.second.size()-1,x.second.data(),300,-1,1));
+    ofile->Add(new TH2D("hsin"+pltv + "_" + bn + "_n","sin(" + ttlv +") vs " + bn,x.second.size()-1,x.second.data(),300,-1,1));
+    ofile->Add(new TH2D("hsinphiH_" + bn + "_p","sin(#phi_{H}) vs " + bn,x.second.size()-1,x.second.data(),300,-1,1));
+    ofile->Add(new TH2D("hsinphiH_" + bn + "_n","sin(#phi_{H}) vs " + bn,x.second.size()-1,x.second.data(),300,-1,1));
+    
+    /// end 2D histos ////
+
     /// ALU histos
     std::cout<<bn<<" : "<<brv[bn]->GetExpFormula()<<std::endl;
 
     ofile->Add(new TH1D("hALU_"+pltv + "_" + bn,"ALU^{sin(" + ttlv+ ")}",x.second.size()-1,x.second.data()));
     ofile->Add(new TH1D("hALU_phiH_" + bn,"ALU^{sin(#phi_{H})}",x.second.size()-1,x.second.data()));
-     
-    /// end ALU
+
+    /// end ALU histos
+    
   }
   
   ///// end REC data ////
