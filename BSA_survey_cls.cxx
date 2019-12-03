@@ -14,7 +14,6 @@ void BSA_survey_cls::Loop()
 //      root> t.Show(16);     // Read and show values of entry 16
 //      root> t.Loop();       // Loop on all entries
 //
-
 //     This is the loop skeleton where:
 //    jentry is the global entry number in the chain
 //    ientry is the entry number in the current Tree

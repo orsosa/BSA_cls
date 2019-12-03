@@ -1085,14 +1085,14 @@ void BSA_survey_cls::Init(TTree *tree,TString binfo)
   
   std::ifstream bf(binfo);
   TString line;
-  char cln[100];
-  bf.getline(cln,100);
+  char cln[500];
+  bf.getline(cln,500);
   bf>>pltv>>ttlv;
   fChain->GetEntries();
   std::cout<<"#### Entries to be processed "<<  fChain->GetEntries()<<" ###"<<std::endl;
   std::cout<<"#### binning configuration ####"<<std::endl;
   std::cout<<"plot var: " + pltv + ", title_var: " + ttlv<<std::endl;
-  while (bf.getline(cln,100)){
+  while (bf.getline(cln,500)){
     line = cln;
     line.ReplaceAll("\t"," ");
     line = line.Strip();

@@ -8,7 +8,7 @@ int main(int argc, char *argv[]){
     return 1;
   }
   
-  BSA_survey_cls t(argv[1]);
+  BSA_survey_cls t(argv[1],"binning_info.txt");
   t.Loop();
   return 0;
 }
