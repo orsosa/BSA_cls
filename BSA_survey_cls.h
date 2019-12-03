@@ -47,9 +47,15 @@ class BSA_survey_cls {
   static constexpr Int_t kMaxdet = 50;
   static constexpr Int_t kMaxpdata = 50;
   static constexpr Int_t kMaxmc_pdata = 50;
+  static constexpr Int_t NSECTORS = 6;
   static constexpr Float_t minALU = -0.15;
   static constexpr Float_t maxALU = 0.15;
 
+  //// elec fid par
+  Float_t pl0_e[NSECTORS],pl1_e[NSECTORS],pl2_e[NSECTORS],pl3_e[NSECTORS],pr0_e[NSECTORS],pr1_e[NSECTORS],pr2_e[NSECTORS],pr3_e[NSECTORS];
+
+  
+  
   //// bin variables
   std::vector <Double_t> *be = 0;
   TString pltv = "", ttlv = "";  
@@ -699,6 +705,7 @@ class BSA_survey_cls {
   virtual Int_t   fillHist(TString hname, Float_t value = -111111);
   virtual Int_t   fillHist2D(TString hname, Float_t x, Float_t y);
   virtual Int_t   configHisto(TH1D *h, TString xtitle, TString ytitle,Color_t c = kBlack, EMarkerStyle ms = kFullDotLarge);
+  virtual Int_t   LoadElecFIDPar();
   virtual Int_t   setStyle();
   virtual Long64_t LoadTree(Long64_t entry);
   virtual void    Init(TChain *tree, TString binfo);

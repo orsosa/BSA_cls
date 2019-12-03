@@ -74,8 +74,8 @@ void BSA_survey_cls::Loop()
 	  if (x.second[n] < brv[bn]->EvalInstance(k) && brv[bn]->EvalInstance(k)< x.second[n+1]){
 	    fillHist(hnamepip,pdata_phiHs[k][0]);
 	    fillHist(hname,phiR[k]);
-	    fillHist2D(hsin, brv[bn]->EvalInstance(k), sin(phiR[k]*TMath::DegToRad()));
-	    fillHist2D(hsinpip, brv[bn]->EvalInstance(k), sin(pdata_phiHs[k][0]*TMath::DegToRad()));
+	    fillHist2D(hsin, brv[bn]->EvalInstance(k), 2*sin(phiR[k]*TMath::DegToRad()));
+	    fillHist2D(hsinpip, brv[bn]->EvalInstance(k), 2*sin(pdata_phiHs[k][0]*TMath::DegToRad()));
 
 	    break;
 	  }
@@ -236,14 +236,14 @@ Float_t BSA_survey_cls::getALU2D(TString bn){
   halup = (TH1D*)hp->ProfileX("hpALU_"+ pltv + "_" + bn);
   halun = (TH1D*)hn->ProfileX("hnALU_"+ pltv + "_" + bn);
   halus = (TH1D*)halup->Clone("hsALU_"+ pltv + "_" + bn);
-  halus->Add(halup,halun,0.5,1.);
+  halus->Add(halup,halun,0.5,0.5);
 
-  halup->SetTitle("<sin(" + ttlv + ")>^{+}");
-  halun->SetTitle("<sin(" + ttlv + ")>^{-}");
-  halus->SetTitle("0.5(<sin(" + ttlv + ")>^{+} - <sin(" + ttlv+ ")>^{-})");
+  halup->SetTitle("2<sin(" + ttlv + ")>^{+}");
+  halun->SetTitle("2<sin(" + ttlv + ")>^{-}");
+  halus->SetTitle("(<sin(" + ttlv + ")>^{+} - <sin(" + ttlv+ ")>^{-})");
   configHisto(halup,bn,"ALU(<sin(" + ttlv + ")>^{+})",kRed,kFullTriangleUp);
   configHisto(halun,bn,"ALU(<sin(" + ttlv + ")>^{-})",kGreen+3,kFullTriangleDown);
-  configHisto(halus,bn,"ALU(0.5#sum<sin(" + ttlv + ")>^{+/-})",kMagenta+1,kFullStar);
+  configHisto(halus,bn,"ALU(#sum<sin(" + ttlv + ")>^{+/-})",kMagenta+1,kFullStar);
     
   ofile->Add(halup);
   ofile->Add(halun);
@@ -324,6 +324,26 @@ Int_t BSA_survey_cls::configHisto(TH1D *h, TString xtitle, TString ytitle, Color
   return 0;
   
 }
+
+Int_t BSA_survey_cls::LoadElecFIDPar(){
+  std::ifstream fpar("/home/orsosa/Dropbox/INFN_work/Phys_ana/PID/DC_elec_par.txt");
+    
+  char junk[100];
+  fpar.getline(junk,100);
+  fpar.getline(junk,100);
+  fpar.getline(junk,100);
+  fpar.getline(junk,100);
+  fpar.getline(junk,100);
+  fpar.getline(junk,100);
+
+  for (int k=0;k<6;k++)
+  {
+    fpar>>pl0_e[k]>>pl1_e[k]>>pl2_e[k]>>pl3_e[k]>>pr0_e[k]>>pr1_e[k]>>pr2_e[k]>>pr3_e[k];
+  }
+  fpar.close();
+  return 0;
+}
+
 
 Int_t BSA_survey_cls::setStyle(){
 
