@@ -263,6 +263,9 @@ Float_t BSA_survey_cls::getALU2D(TString bn){
   halup = (TH1D*)hp->ProfileX("hpALU_phiH_" + bn);
   halun = (TH1D*)hn->ProfileX("hnALU_phiH_" + bn);
   halus = (TH1D*)halup->Clone("hsALU_phiH_" + bn);
+  halup->Scale(2.);
+  halun->Scale(2.);
+
   halus->Add(halup,halun,0.5,0.5);
 
   halup->SetTitle("<sin(#phi_{H})>^{+}");
