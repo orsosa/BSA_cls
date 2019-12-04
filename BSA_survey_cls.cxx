@@ -159,7 +159,7 @@ void BSA_survey_cls::Loop()
 Bool_t BSA_survey_cls::DIS()
 {
 
-  return (Q2>1)&&(W>2)&&(y<0.85);
+  return (Q2>1)&&(W>2)&&(y<0.85)&&(Pe>2);
 }
 
 Bool_t BSA_survey_cls::eFID_ec()
@@ -243,7 +243,7 @@ Float_t BSA_survey_cls::getALU2D(TString bn){
   halus->Add(halup,halun,0.5,0.5);
 
   halup->SetTitle("2<sin(" + ttlv + ")>^{+}");
-  halun->SetTitle("2<sin(" + ttlv + ")>^{-}");
+  halun->SetTitle("-2<sin(" + ttlv + ")>^{-}");
   halus->SetTitle("(<sin(" + ttlv + ")>^{+} - <sin(" + ttlv+ ")>^{-})");
   configHisto(halup,bn,"ALU(<sin(" + ttlv + ")>^{+})",kRed,kFullTriangleUp);
   configHisto(halun,bn,"ALU(<sin(" + ttlv + ")>^{-})",kGreen+3,kFullTriangleDown);
@@ -265,16 +265,16 @@ Float_t BSA_survey_cls::getALU2D(TString bn){
   halus = (TH1D*)halup->Clone("hsALU_phiH_" + bn);
   halup->Scale(2.);
   halun->Scale(2.);
-
+  
   halus->Add(halup,halun,0.5,0.5);
 
-  halup->SetTitle("<sin(#phi_{H})>^{+}");
-  halun->SetTitle("-<sin(#phi_{H})>^{-}");
-  halus->SetTitle("0.5(<sin(#phi_{H})>^{+} - <sin(#phi_{H})>^{-})");
+  halup->SetTitle("2<sin(#phi_{H})>^{+}");
+  halun->SetTitle("-2<sin(#phi_{H})>^{-}");
+  halus->SetTitle("(<sin(#phi_{H})>^{+} - <sin(#phi_{H})>^{-})");
 
   configHisto(halup,bn,"ALU(<sin(#phi_{H})>^{+})",kRed,kFullTriangleUp);
   configHisto(halun,bn,"ALU(<sin(#phi_{H})>^{-})",kGreen+3,kFullTriangleDown);
-  configHisto(halus,bn,"ALU(0.5#sum<sin(#phi_{H})>^{+/-})",kMagenta+1,kFullStar);
+  configHisto(halus,bn,"ALU(#sum<sin(#phi_{H})>^{+/-})",kMagenta+1,kFullStar);
   
   
   ///// end phiH /////
