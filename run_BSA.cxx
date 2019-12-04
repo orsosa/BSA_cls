@@ -10,5 +10,7 @@ int main(int argc, char *argv[]){
   
   BSA_survey_cls t(argv[1],"binning_info.txt");
   t.Loop();
+  std::cout<<"end"<<std::endl;
   return 0;
 }
+

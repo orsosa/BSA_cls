@@ -32,7 +32,8 @@ void BSA_survey_cls::Loop()
 
   std::cout<<"processing...\n";
   std::cout.fill('.');
-  std::cout<<"# trees to be processed: "<<fChain->GetNtrees()<<std::endl; 
+  std::cout<<"# trees to be processed: "<<fChain->GetNtrees()<<std::endl;
+  
   Long64_t nentries = fChain->GetEntries();
 
   Long64_t nbytes = 0, nb = 0;
@@ -74,8 +75,8 @@ void BSA_survey_cls::Loop()
 	  if (x.second[n] < brv[bn]->EvalInstance(k) && brv[bn]->EvalInstance(k)< x.second[n+1]){
 	    fillHist(hnamepip,pdata_phiHs[k][0]);
 	    fillHist(hname,phiR[k]);
-	    fillHist2D(hsin, brv[bn]->EvalInstance(k), 2*sin(phiR[k]*TMath::DegToRad()));
-	    fillHist2D(hsinpip, brv[bn]->EvalInstance(k), 2*sin(pdata_phiHs[k][0]*TMath::DegToRad()));
+	    fillHist2D(hsin, brv[bn]->EvalInstance(k), sin(phiR[k]*TMath::DegToRad()));
+	    fillHist2D(hsinpip, brv[bn]->EvalInstance(k), sin(pdata_phiHs[k][0]*TMath::DegToRad()));
 
 	    break;
 	  }
@@ -87,13 +88,16 @@ void BSA_survey_cls::Loop()
     std::cout.flush();
     
   }
+
+ 
+  
   TH1D *h;
   Float_t val,err;
   std::cout<<getALU("hp_phiR","hn_phiR",pltv,ttlv,val,err)<<std::endl;
   std::cout<<getALU("hp_phiH","hn_phiH","phiH","#phi_{H}",val,err)<<std::endl;
+ 
   for (auto& x: bedg){
     TString bn = x.first;
-
     for (int k=0;k<x.second.size()-1;k++){
       TString hname = pltv + "_" + bn + Form("_b%d",k);
       TString hnamepip = "phiH_" + bn + Form("_b%d",k);
@@ -118,14 +122,11 @@ void BSA_survey_cls::Loop()
     ofile->GetObject("hpALU_"+ pltv + "_" + bn,halu_p);
     ofile->GetObject("hnALU_"+ pltv + "_" + bn,halu_n);
     ofile->GetObject("hsALU_"+ pltv + "_" + bn,halu_s);
-
     ofile->GetObject("hpALU_phiH_" + bn,halu_pip_p);
     ofile->GetObject("hnALU_phiH_" + bn,halu_pip_n);
     ofile->GetObject("hsALU_phiH_" + bn,halu_pip_s);
-
     ofile->GetObject("hALU_"+pltv + "_" + bn,halu);
     ofile->GetObject("hALU_phiH_" + bn,halu_pip);
-
     halu_p->GetYaxis()->SetRangeUser(minALU,maxALU);
     halu_n->GetYaxis()->SetRangeUser(minALU,maxALU);
     halu_s->GetYaxis()->SetRangeUser(minALU,maxALU);
@@ -146,10 +147,11 @@ void BSA_survey_cls::Loop()
     halu_n->Draw("same");
     halu_s->Draw("same");
     ofile->Add(c);
-    
+  
   }
   
   ofile->Write("",TObject::kOverwrite);
+  ofile->Close();
   bm->Show("main");
 
 }
@@ -236,6 +238,8 @@ Float_t BSA_survey_cls::getALU2D(TString bn){
   halup = (TH1D*)hp->ProfileX("hpALU_"+ pltv + "_" + bn);
   halun = (TH1D*)hn->ProfileX("hnALU_"+ pltv + "_" + bn);
   halus = (TH1D*)halup->Clone("hsALU_"+ pltv + "_" + bn);
+  halup->Scale(2.);
+  halun->Scale(2.);
   halus->Add(halup,halun,0.5,0.5);
 
   halup->SetTitle("2<sin(" + ttlv + ")>^{+}");
@@ -245,10 +249,6 @@ Float_t BSA_survey_cls::getALU2D(TString bn){
   configHisto(halun,bn,"ALU(<sin(" + ttlv + ")>^{-})",kGreen+3,kFullTriangleDown);
   configHisto(halus,bn,"ALU(#sum<sin(" + ttlv + ")>^{+/-})",kMagenta+1,kFullStar);
     
-  ofile->Add(halup);
-  ofile->Add(halun);
-  ofile->Add(halus);
-  
   ///// end pltv /////
 
   ////  phiH ////
@@ -273,9 +273,6 @@ Float_t BSA_survey_cls::getALU2D(TString bn){
   configHisto(halun,bn,"ALU(<sin(#phi_{H})>^{-})",kGreen+3,kFullTriangleDown);
   configHisto(halus,bn,"ALU(0.5#sum<sin(#phi_{H})>^{+/-})",kMagenta+1,kFullStar);
   
-  ofile->Add(halup);
-  ofile->Add(halun);
-  ofile->Add(halus);
   
   ///// end phiH /////
 
@@ -286,9 +283,9 @@ Float_t BSA_survey_cls::getALU2D(TString bn){
 
 Int_t BSA_survey_cls::fillHist(TString hname, Float_t value){
   TH1D *h;
-  if (helic == -1) 
+  if (helic == -1) // positive helicity, it is flipped!
     ofile->GetObject("hp_"+ hname,h);
-  else if(helic == 1)
+  else if(helic == 1)// negative helicity, it is flipped!
     ofile->GetObject("hn_"+ hname,h);
   else
     return 1;
@@ -298,11 +295,11 @@ Int_t BSA_survey_cls::fillHist(TString hname, Float_t value){
 
 Int_t BSA_survey_cls::fillHist2D(TString hname, Float_t x, Float_t y){
   TH2D *h;
-  if (helic == -1) {
+  if (helic == -1) { // positive helicity, it is flipped!
     ofile->GetObject(hname + "_p",h);
     h->Fill(x,y);
   }
-  else if(helic == 1){
+  else if(helic == 1){ // negative helicity, it is flipped!
     ofile->GetObject(hname + "_n",h);
     h->Fill(x,-y);
   }
@@ -327,7 +324,7 @@ Int_t BSA_survey_cls::configHisto(TH1D *h, TString xtitle, TString ytitle, Color
 
 Int_t BSA_survey_cls::LoadElecFIDPar(){
   std::ifstream fpar("/home/orsosa/Dropbox/INFN_work/Phys_ana/PID/DC_elec_par.txt");
-    
+
   char junk[100];
   fpar.getline(junk,100);
   fpar.getline(junk,100);
@@ -336,7 +333,7 @@ Int_t BSA_survey_cls::LoadElecFIDPar(){
   fpar.getline(junk,100);
   fpar.getline(junk,100);
 
-  for (int k=0;k<6;k++)
+  for (int k=0;k<NSECTORS;k++)
   {
     fpar>>pl0_e[k]>>pl1_e[k]>>pl2_e[k]>>pl3_e[k]>>pr0_e[k]>>pr1_e[k]>>pr2_e[k]>>pr3_e[k];
   }

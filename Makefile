@@ -34,6 +34,6 @@ dict/dictBSA.cxx: BSA_survey_cls.h
 
 
 slib/libBSA_cls.so: BSA_survey_cls.cxx
-	g++ -shared -fPIC -o $@ $(ROOTLDFLAGS) $(ROOTCFLAGS) $(HIPOCFLAGS) $(INC_DIR) $(ROOTCFLAGS) $^
+	g++ -shared -fPIC -o $@ $(ROOTLDFLAGS) $(ROOTCFLAGS) $(HIPOCFLAGS) $(INC_DIR) $(ROOTCFLAGS) $^ #-g -O0
 #	cp dict/datadict_rdict.pcm slib/.
 

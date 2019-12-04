@@ -52,9 +52,8 @@ class BSA_survey_cls {
   static constexpr Float_t maxALU = 0.15;
 
   //// elec fid par
-  Float_t pl0_e[NSECTORS],pl1_e[NSECTORS],pl2_e[NSECTORS],pl3_e[NSECTORS],pr0_e[NSECTORS],pr1_e[NSECTORS],pr2_e[NSECTORS],pr3_e[NSECTORS];
+  Float_t pl0_e[NSECTORS], pl1_e[NSECTORS], pl2_e[NSECTORS], pl3_e[NSECTORS], pr0_e[NSECTORS], pr1_e[NSECTORS], pr2_e[NSECTORS], pr3_e[NSECTORS];
 
-  
   
   //// bin variables
   std::vector <Double_t> *be = 0;
@@ -730,6 +729,11 @@ BSA_survey_cls::BSA_survey_cls(TString infile, TString binfo) : fChain(0)
   else {
     tch->Add(infile + "/outdata");
   }
+  bm = new TBenchmark();
+  bm->Start("main");
+  setStyle();
+  LoadElecFIDPar();
+
   Init(tch,binfo);
 }
 
@@ -771,11 +775,8 @@ void BSA_survey_cls::Init(TChain *tree,TString binfo)
   // Init() will be called many times when running on PROOF
   // (once per file to be processed).
 
-  bm = new TBenchmark();
-  bm->Start("main");
   // Set branch addresses and branch pointers
   if (!tree) return;
-  setStyle();
   fChain = tree;
   fCurrent = -1;
   fChain->SetMakeClass(1);
@@ -1145,13 +1146,13 @@ void BSA_survey_cls::Init(TChain *tree,TString binfo)
   Int_t Nb_phi = 12;
   Float_t min_phi = 0, max_phi = 360;
   
-  ofile->Add(new TH1D("hM","#pi^{+}#pi^{-} : IM",300,0,3));
+  new TH1D("hM","#pi^{+}#pi^{-} : IM",300,0,3);
 
-  ofile->Add(new TH1D("hp_phiR","#pi^{+}#pi^{-} : #phi_{R#perp} (#lambda = +1)",Nb_phi, min_phi, max_phi));
-  ofile->Add(new TH1D("hn_phiR","#pi^{+}#pi^{-} : #phi_{R#perp} (#lambda = -1)",Nb_phi, min_phi, max_phi));
+  new TH1D("hp_phiR","#pi^{+}#pi^{-} : #phi_{R#perp} (#lambda = +1)",Nb_phi, min_phi, max_phi);
+  new TH1D("hn_phiR","#pi^{+}#pi^{-} : #phi_{R#perp} (#lambda = -1)",Nb_phi, min_phi, max_phi);
 
-  ofile->Add(new TH1D("hp_phiH","#pi^{+} : #phi_{H} (#lambda = +1)",Nb_phi, min_phi, max_phi));
-  ofile->Add(new TH1D("hn_phiH","#pi^{+} : #phi_{H} (#lambda = -1)",Nb_phi, min_phi, max_phi));
+  new TH1D("hp_phiH","#pi^{+} : #phi_{H} (#lambda = +1)",Nb_phi, min_phi, max_phi);
+  new TH1D("hn_phiH","#pi^{+} : #phi_{H} (#lambda = -1)",Nb_phi, min_phi, max_phi);
 
   std::cout<<"#######\nALU histograms : "<<std::endl;
       
@@ -1161,27 +1162,27 @@ void BSA_survey_cls::Init(TChain *tree,TString binfo)
       TString hname = pltv + "_" + bn + Form("_b%d",k);
       TString hnamepip = "phiH_" + bn + Form("_b%d",k);
       TString ttlsuf =  Form("%.2f<%s<%.2f",x.second[k], bn.Data(), x.second[k+1]);
-      ofile->Add(new TH1D("hp_"+ hname, "#pi^{+}#pi^{-} : " + ttlv + " (#lambda = +1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi));
-      ofile->Add(new TH1D("hn_"+ hname, "#pi^{+}#pi^{-} : " + ttlv + " (#lambda = -1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi));
+      new TH1D("hp_"+ hname, "#pi^{+}#pi^{-} : " + ttlv + " (#lambda = +1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi);
+      new TH1D("hn_"+ hname, "#pi^{+}#pi^{-} : " + ttlv + " (#lambda = -1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi);
 
-      ofile->Add(new TH1D("hp_" + hnamepip,"#pi^{+} : #phi_{H} (#lambda = +1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi));
-      ofile->Add(new TH1D("hn_" + hnamepip,"#pi^{+} : #phi_{H} (#lambda = -1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi));
+      new TH1D("hp_" + hnamepip,"#pi^{+} : #phi_{H} (#lambda = +1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi);
+      new TH1D("hn_" + hnamepip,"#pi^{+} : #phi_{H} (#lambda = -1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi);
     }
 
     /// 2D histos ///
 
-    ofile->Add(new TH2D("hsin"+pltv + "_" + bn + "_p","sin(" + ttlv +") vs " + bn,x.second.size()-1,x.second.data(),300,-1,1));
-    ofile->Add(new TH2D("hsin"+pltv + "_" + bn + "_n","sin(" + ttlv +") vs " + bn,x.second.size()-1,x.second.data(),300,-1,1));
-    ofile->Add(new TH2D("hsinphiH_" + bn + "_p","sin(#phi_{H}) vs " + bn,x.second.size()-1,x.second.data(),300,-1,1));
-    ofile->Add(new TH2D("hsinphiH_" + bn + "_n","sin(#phi_{H}) vs " + bn,x.second.size()-1,x.second.data(),300,-1,1));
+    new TH2D("hsin"+pltv + "_" + bn + "_p","sin(" + ttlv +") vs " + bn,x.second.size()-1,x.second.data(),300,-1,1);
+    new TH2D("hsin"+pltv + "_" + bn + "_n","sin(" + ttlv +") vs " + bn,x.second.size()-1,x.second.data(),300,-1,1);
+    new TH2D("hsinphiH_" + bn + "_p","sin(#phi_{H}) vs " + bn,x.second.size()-1,x.second.data(),300,-1,1);
+    new TH2D("hsinphiH_" + bn + "_n","sin(#phi_{H}) vs " + bn,x.second.size()-1,x.second.data(),300,-1,1);
     
     /// end 2D histos ////
 
     /// ALU histos
     std::cout<<bn<<" : "<<brv[bn]->GetExpFormula()<<std::endl;
 
-    ofile->Add(new TH1D("hALU_"+pltv + "_" + bn,"ALU^{sin(" + ttlv+ ")}",x.second.size()-1,x.second.data()));
-    ofile->Add(new TH1D("hALU_phiH_" + bn,"ALU^{sin(#phi_{H})}",x.second.size()-1,x.second.data()));
+    new TH1D("hALU_"+pltv + "_" + bn,"ALU^{sin(" + ttlv+ ")}",x.second.size()-1,x.second.data());
+    new TH1D("hALU_phiH_" + bn,"ALU^{sin(#phi_{H})}",x.second.size()-1,x.second.data());
 
     /// end ALU histos
     
