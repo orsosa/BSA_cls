@@ -42,13 +42,16 @@ void BSA_survey_cls::Loop()
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;
     TH1D *h;
+    ofile->GetObject("hNpair_all",h);
+    h->Fill(npart);
+    
     if (!(npart == 1)) continue;
 
-    if ( !(DIS() && eFID_ec() && eFID_dc()) ) continue;
+    if ( !(DIS() && eFID_ec() && eFID_dc() && ePID()) ) continue;
+    fillEvHistos();
     for (int k = 0; k<npart; k++){
       if ( !(FWD(k) && CF(k) && piFID_ec(k) && pipFID_dc(k) && pimFID_dc(k)) ) continue; // kin limits.
-      ofile->GetObject("hM",h);
-      h->Fill(M[k]);
+      fillPartHistos(k);
       
       if (helic == -1) 
 	ofile->GetObject("hp_phiR",h);
@@ -107,14 +110,14 @@ void BSA_survey_cls::Loop()
       ofile->GetObject("hALU_"+pltv + "_" + bn,h);
       h->SetBinContent(k+1,val);
       h->SetBinError(k+1,err);
-      configHisto(h,bn,"ALU^{sin(" + ttlv + ")}",kBlack);
+      configHisto(h,bn,"A_{LU}^{sin(" + ttlv + ")}",kBlack);
       ///// end pip ////
       ///// ALU pip ////
       getALU("hp_"+ hnamepip,"hn_"+ hnamepip, hnamepip, "#phi_{H}, (" + ttlsuf  + ")",val,err);
       ofile->GetObject("hALU_phiH_" + bn,h);
       h->SetBinContent(k+1,val);
       h->SetBinError(k+1,err);
-      configHisto(h,bn,"ALU^{sin(#phi_{H})}",kBlack);
+      configHisto(h,bn,"A_{LU}^{sin(#phi_{H})}",kBlack);
       //// end ALU pip ////
     }
     TH1D *halu_p, *halu_n, *halu_s, *halu, *halu_pip_p, *halu_pip_n, *halu_pip_s, *halu_pip;
@@ -135,19 +138,29 @@ void BSA_survey_cls::Loop()
     halu_pip_s->GetYaxis()->SetRangeUser(minALU,maxALU);
     halu->GetYaxis()->SetRangeUser(minALU,maxALU);
     halu_pip->GetYaxis()->SetRangeUser(minALU,maxALU);
-    TCanvas *c = new TCanvas("can_pip_"+ bn,"can_pip_"+bn,800,600);
+    TCanvas *c = new TCanvas("can_pip_"+ bn + "_all","can_pip_"+bn,800,600);
     halu_pip->Draw();
     halu_pip_p->Draw("same");
     halu_pip_n->Draw("same");
     halu_pip_s->Draw("same");
     ofile->Add(c);
-    c = new TCanvas("can_"+ bn,"can_"+bn,800,600);
+    c = new TCanvas("can_"+ bn + "_all","can_"+bn,800,600);
     halu->Draw();
     halu_p->Draw("same");
     halu_n->Draw("same");
     halu_s->Draw("same");
     ofile->Add(c);
+    /// only sum and fit estimations.
+    c = new TCanvas("can_pip_"+ bn,"can_pip_"+bn,800,600);
+    halu_pip->Draw();
+    halu_pip_s->Draw("same");
+    ofile->Add(c);
+    c = new TCanvas("can_"+ bn,"can_"+bn,800,600);
+    halu->Draw();
+    halu_s->Draw("same");
+    ofile->Add(c);
   
+    
   }
   
   ofile->Write("",TObject::kOverwrite);
@@ -156,10 +169,16 @@ void BSA_survey_cls::Loop()
 
 }
 
+Bool_t BSA_survey_cls::ePID()
+{
+  return (Pe>2)&&(-2.5<e_chi2pid&&e_chi2pid<2.5);
+}
+
+
 Bool_t BSA_survey_cls::DIS()
 {
 
-  return (Q2>1)&&(W>2)&&(y<0.85)&&(Pe>2);
+  return (Q2>1)&&(W>2)&&(y<0.85);
 }
 
 Bool_t BSA_survey_cls::eFID_ec()
@@ -194,7 +213,7 @@ Bool_t BSA_survey_cls::FWD(int k)
 
 Bool_t BSA_survey_cls::CF(int k)
 {
-  return (vze<20) && (xFm0[k]>0) && (xFm1[k]>0) && (pdata_e[k][0]/Nu>0.2) && (pdata_e[k][1]/Nu>0.2) && ((pdata_e[k][0] + pdata_e[k][1])/Nu<0.95);
+  return (vze<20) && (xFm0[k]>0) && (xFm1[k]>0) && (pdata_e[k][0]/Nu>0.1) && (pdata_e[k][1]/Nu>0.1) && ((pdata_e[k][0] + pdata_e[k][1])/Nu<0.95);
 
 }
 
@@ -215,11 +234,13 @@ Float_t BSA_survey_cls::getALU(TString hpname, TString hnname, TString pv, TStri
   hm->Add(hp,hn,1,-1);
   hALU->Divide(hm,hs);
   ff->SetParameter(0,0.01);
+  std::cout<<tv<<std::endl;
   res = hALU->Fit(ff,"Rs+0");
   val = ff->GetParameter(0);
   err = ff->GetParError(0);
   return ff->GetParameter(0);
 }
+
 
 Float_t BSA_survey_cls::getALU2D(TString bn){
   TString psname, nsname;
@@ -245,9 +266,9 @@ Float_t BSA_survey_cls::getALU2D(TString bn){
   halup->SetTitle("2<sin(" + ttlv + ")>^{+}");
   halun->SetTitle("-2<sin(" + ttlv + ")>^{-}");
   halus->SetTitle("(<sin(" + ttlv + ")>^{+} - <sin(" + ttlv+ ")>^{-})");
-  configHisto(halup,bn,"ALU(<sin(" + ttlv + ")>^{+})",kRed,kFullTriangleUp);
-  configHisto(halun,bn,"ALU(<sin(" + ttlv + ")>^{-})",kGreen+3,kFullTriangleDown);
-  configHisto(halus,bn,"ALU(#sum<sin(" + ttlv + ")>^{+/-})",kMagenta+1,kFullStar);
+  configHisto(halup,bn,"A_{LU}(<sin(" + ttlv + ")>^{+})",kRed,kFullTriangleUp);
+  configHisto(halun,bn,"A_{LU}(<sin(" + ttlv + ")>^{-})",kGreen+3,kFullTriangleDown);
+  configHisto(halus,bn,"A_{LU}(#sum<sin(" + ttlv + ")>^{+/-})",kMagenta+1,kFullStar);
     
   ///// end pltv /////
 
@@ -272,9 +293,9 @@ Float_t BSA_survey_cls::getALU2D(TString bn){
   halun->SetTitle("-2<sin(#phi_{H})>^{-}");
   halus->SetTitle("(<sin(#phi_{H})>^{+} - <sin(#phi_{H})>^{-})");
 
-  configHisto(halup,bn,"ALU(<sin(#phi_{H})>^{+})",kRed,kFullTriangleUp);
-  configHisto(halun,bn,"ALU(<sin(#phi_{H})>^{-})",kGreen+3,kFullTriangleDown);
-  configHisto(halus,bn,"ALU(#sum<sin(#phi_{H})>^{+/-})",kMagenta+1,kFullStar);
+  configHisto(halup,bn,"A_{LU}(<sin(#phi_{H})>^{+})",kRed,kFullTriangleUp);
+  configHisto(halun,bn,"A_{LU}(<sin(#phi_{H})>^{-})",kGreen+3,kFullTriangleDown);
+  configHisto(halus,bn,"A_{LU}(#sum<sin(#phi_{H})>^{+/-})",kMagenta+1,kFullStar);
   
   
   ///// end phiH /////

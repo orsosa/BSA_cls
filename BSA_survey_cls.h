@@ -690,6 +690,7 @@ class BSA_survey_cls {
   virtual ~BSA_survey_cls();
   virtual Int_t   Cut(Long64_t entry);
   virtual Bool_t  DIS();
+  virtual Bool_t  ePID();
   virtual Bool_t  eFID_ec();
   virtual Bool_t  eFID_dc();
   virtual Bool_t  piFID_ec(int k = 0);
@@ -706,6 +707,9 @@ class BSA_survey_cls {
   virtual Int_t   configHisto(TH1D *h, TString xtitle, TString ytitle,Color_t c = kBlack, EMarkerStyle ms = kFullDotLarge);
   virtual Int_t   LoadElecFIDPar();
   virtual Int_t   setStyle();
+  virtual Int_t   initKinHistos();
+  virtual Int_t   fillEvHistos();
+  virtual Int_t   fillPartHistos(int k = 0);
   virtual Long64_t LoadTree(Long64_t entry);
   virtual void    Init(TChain *tree, TString binfo);
   virtual void    Loop();
@@ -1145,8 +1149,8 @@ void BSA_survey_cls::Init(TChain *tree,TString binfo)
   ofile = new TFile(OUTDIR + "/BSA_results.root","recreate");
   Int_t Nb_phi = 12;
   Float_t min_phi = 0, max_phi = 360;
-  
-  new TH1D("hM","#pi^{+}#pi^{-} : IM",300,0,3);
+
+  initKinHistos();
 
   new TH1D("hp_phiR","#pi^{+}#pi^{-} : #phi_{R#perp} (#lambda = +1)",Nb_phi, min_phi, max_phi);
   new TH1D("hn_phiR","#pi^{+}#pi^{-} : #phi_{R#perp} (#lambda = -1)",Nb_phi, min_phi, max_phi);
@@ -1217,5 +1221,91 @@ Int_t BSA_survey_cls::Cut(Long64_t entry)
   // returns  1 if entry is accepted.
   // returns -1 otherwise.
   return 1;
+}
+
+Int_t BSA_survey_cls::initKinHistos(){
+  TH1D *h;
+  TH2D *h2;
+  Int_t Nbins = 500;
+  h = new TH1D("hNpair_all","#pi^{+}#pi^{-} : N pairs",6,0,6);
+  configHisto(h,"pairs","dN/dpairs");
+  h = new TH1D("hNpair","#pi^{+}#pi^{-} : N pairs",6,0,6);
+  configHisto(h,"pairs","dN/dpairs");
+  h = new TH1D("hth_e","#theta_{e}",Nbins,0,50);
+  configHisto(h,"#theta_{e}","dN/d#theta");
+  h = new TH1D("hM","#pi^{+}#pi^{-} : IM",Nbins,0,3);
+  configHisto(h,"M_{#pi^{+}#pi^{-}} GeV","dN/dm");
+  h = new TH1D("hMx","#pi^{+}#pi^{-} : MM",Nbins,0,3);
+  configHisto(h,"Mx (e#pi^{+}#pi^{-}X) GeV","dN/dmx");
+  h = new TH1D("hz","#pi^{+}#pi^{-} : z",Nbins,0,1);
+  configHisto(h,"z","dN/dz");
+  h = new TH1D("hz0","#pi^{+} : z",Nbins,0,1);
+  configHisto(h,"z_{#pi^{+}}","dN/dz");
+  h = new TH1D("hz1","#pi^{-} : z",Nbins,0,1);
+  configHisto(h,"z_{#pi^{-}}","dN/dz");
+  h = new TH1D("hpT","#pi^{+}#pi^{-} : pT",Nbins,0,1.2);
+  configHisto(h,"pT GeV","dN/dpt");
+  h = new TH1D("hpT0","#pi^{+} : pT",Nbins,0,1.2);
+  configHisto(h,"pT_{#pi^{+}} GeV","dN/dpt");
+  h = new TH1D("hpT1","#pi^{-} : pT",Nbins,0,1.2);
+  configHisto(h,"pT_{#pi^{-}} GeV","dN/dpt");
+  
+  h2 = new TH2D("hQ2x","Q2 vs x",Nbins,0.04,1,Nbins,0.95,10);
+  h2->GetXaxis()->SetTitle("x");
+  h2->GetYaxis()->SetTitle("Q2 GeV^{2}");
+
+  h2 = new TH2D("hSFPe","Ee/Pe vs Pe",Nbins,0,10,Nbins,0.15,0.35);
+  h2->GetXaxis()->SetTitle("Pe GeV");
+  h2->GetYaxis()->SetTitle("Ee/Pe");
+
+  h2 = new TH2D("hthphi_e","#theta_{e} vs #phi_{e}",Nbins,-180,180,Nbins,0,50);
+  h2->GetXaxis()->SetTitle("#phi_{e}");
+  h2->GetYaxis()->SetTitle("#theta_{e}");
+
+  
+  return 0;
+
+}
+
+Int_t BSA_survey_cls::fillEvHistos(){
+  TH1D *h;
+  TH2D *h2;
+  ofile->GetObject("hNpair",h);
+  h->Fill(npart);
+
+  ofile->GetObject("hth_e",h);
+  h->Fill(th_e);
+  ofile->GetObject("hQ2x",h2);
+  h2->Fill(Xb,Q2);
+  ofile->GetObject("hSFPe",h2);
+  h2->Fill(Pe,Ee/Pe);
+  ofile->GetObject("hthphi_e",h2);
+  h2->Fill(phi_e,th_e);
+
+  return 0;
+}
+
+Int_t BSA_survey_cls::fillPartHistos(int k){
+  TH1D *h;
+  TH2D *h2;
+  ofile->GetObject("hM",h);
+  h->Fill(M[k]);
+  ofile->GetObject("hMx",h);
+  h->Fill(sqrt(Mx2[k]));
+  ofile->GetObject("hz",h);
+  h->Fill(Z[k]);
+  ofile->GetObject("hz0",h);
+  h->Fill(pdata_e[k][0]/Nu);
+  ofile->GetObject("hz1",h);
+  h->Fill(pdata_e[k][1]/Nu);
+  ofile->GetObject("hpT",h);
+  h->Fill(sqrt(Pt2[k]));
+  ofile->GetObject("hpT0",h);
+  h->Fill(sqrt(p0T2[k]));
+  ofile->GetObject("hpT1",h);
+  h->Fill(sqrt(p1T2[k]));
+
+  return 0;
+
 }
 #endif // #ifdef BSA_survey_cls_cxx
