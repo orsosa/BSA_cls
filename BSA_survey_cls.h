@@ -44,13 +44,15 @@ class BSA_survey_cls {
   Int_t           fCurrent; //!current Tree number in a TChain
   TStyle *myStyle;
   // Fixed size dimensions of array or collections stored in the TTree if any.
-  static constexpr Int_t kMaxdet = 50;
-  static constexpr Int_t kMaxpdata = 50;
-  static constexpr Int_t kMaxmc_pdata = 50;
+  static constexpr Int_t kMaxdet = 400;
+  static constexpr Int_t kMaxpdata = 400;
+  static constexpr Int_t kMaxmc_pdata = 400;
   static constexpr Int_t NSECTORS = 6;
   static constexpr Float_t minALU = -0.15;
   static constexpr Float_t maxALU = 0.15;
 
+  Float_t         *helicity;
+  
   //// elec fid par
   Float_t pl0_e[NSECTORS], pl1_e[NSECTORS], pl2_e[NSECTORS], pl3_e[NSECTORS], pr0_e[NSECTORS], pr1_e[NSECTORS], pr2_e[NSECTORS], pr3_e[NSECTORS];
 
@@ -686,7 +688,7 @@ class BSA_survey_cls {
   TBranch        *b_mc_fV;   //!
   TBranch        *b_mc_fW;   //!
 
-  BSA_survey_cls(TString infile = "", TString binfo = "binning_info.txt");
+  BSA_survey_cls(TString infile = "", TString binfo = "binning_info.txt",TString rg = "rgb");
   virtual ~BSA_survey_cls();
   virtual Int_t   Cut(Long64_t entry);
   virtual Bool_t  DIS();
@@ -711,7 +713,7 @@ class BSA_survey_cls {
   virtual Int_t   fillEvHistos();
   virtual Int_t   fillPartHistos(int k = 0);
   virtual Long64_t LoadTree(Long64_t entry);
-  virtual void    Init(TChain *tree, TString binfo);
+  virtual void    Init(TChain *tree, TString binfo,TString rg);
   virtual void    Loop();
   virtual Bool_t  Notify();
   virtual void    Show(Long64_t entry = -1);
@@ -720,7 +722,7 @@ class BSA_survey_cls {
 #endif
 
 #ifdef BSA_survey_cls_cxx
-BSA_survey_cls::BSA_survey_cls(TString infile, TString binfo) : fChain(0) 
+BSA_survey_cls::BSA_survey_cls(TString infile, TString binfo, TString rg) : fChain(0) 
 {
   TChain *tch = new TChain();
   // if parameter tree is not specified (or zero), connect the file
@@ -738,7 +740,7 @@ BSA_survey_cls::BSA_survey_cls(TString infile, TString binfo) : fChain(0)
   setStyle();
   LoadElecFIDPar();
 
-  Init(tch,binfo);
+  Init(tch,binfo,rg);
 }
 
 BSA_survey_cls::~BSA_survey_cls()
@@ -769,7 +771,7 @@ Long64_t BSA_survey_cls::LoadTree(Long64_t entry)
   return centry;
 }
 
-void BSA_survey_cls::Init(TChain *tree,TString binfo)
+void BSA_survey_cls::Init(TChain *tree,TString binfo,TString rg)
 {
   // The Init() function is called when the selector needs to initialize
   // a new tree or chain. Typically here the branch addresses and branch
@@ -1097,7 +1099,14 @@ void BSA_survey_cls::Init(TChain *tree,TString binfo)
   fChain->SetBranchAddress("mc_fW", &mc_fW, &b_mc_fW);
 
   OUTDIR = "";
-  
+  //// end setting address ///
+  //// selecting helicity variable. ///
+   if (rg.Contains("rgb"))
+    helicity = &helonline_hel;
+  else
+    helicity = &helic;
+ 
+   /////////// end setting helicity variable. ////
   ///// Setting bins and output dir ////
   
   std::ifstream bf(binfo);

@@ -4,6 +4,7 @@
 #include <TStyle.h>
 #include <TCanvas.h>
 
+
 void BSA_survey_cls::Loop()
 {
 //   In a ROOT session, you can do:
@@ -53,16 +54,15 @@ void BSA_survey_cls::Loop()
       if ( !(FWD(k) && CF(k) && piFID_ec(k) && pipFID_dc(k) && pimFID_dc(k)) ) continue; // kin limits.
       fillPartHistos(k);
       
-      if (helic == -1) 
+      if (*helicity == -1) 
 	ofile->GetObject("hp_phiR",h);
-      else if(helic == 1)
+      else if(*helicity == 1)
 	ofile->GetObject("hn_phiR",h);
       h->Fill(phiR[k]);
-
       
-      if (helic == -1) 
+      if (*helicity == -1) 
 	ofile->GetObject("hp_phiH",h);
-      else if(helic == 1)
+      else if(*helicity == 1)
 	ofile->GetObject("hn_phiH",h);
       h->Fill(pdata_phiHs[k][0]);
       for (auto& x: bedg){
@@ -91,9 +91,7 @@ void BSA_survey_cls::Loop()
     std::cout.flush();
     
   }
-
  
-  
   TH1D *h;
   Float_t val,err;
   std::cout<<getALU("hp_phiR","hn_phiR",pltv,ttlv,val,err)<<std::endl;
@@ -171,7 +169,7 @@ void BSA_survey_cls::Loop()
 
 Bool_t BSA_survey_cls::ePID()
 {
-  return (Pe>2)&&(-2.5<e_chi2pid&&e_chi2pid<2.5);
+  return  (vze<20) && (Pe>2)&&(-2.5<e_chi2pid&&e_chi2pid<2.5);
 }
 
 
@@ -213,7 +211,7 @@ Bool_t BSA_survey_cls::FWD(int k)
 
 Bool_t BSA_survey_cls::CF(int k)
 {
-  return (vze<20) && (xFm0[k]>0) && (xFm1[k]>0) && (pdata_e[k][0]/Nu>0.1) && (pdata_e[k][1]/Nu>0.1) && ((pdata_e[k][0] + pdata_e[k][1])/Nu<0.95);
+  return (xFm0[k]>0) && (xFm1[k]>0) && (pdata_e[k][0]/Nu>0.1) && (pdata_e[k][1]/Nu>0.1) && ((pdata_e[k][0] + pdata_e[k][1])/Nu<0.95);
 
 }
 
@@ -307,9 +305,9 @@ Float_t BSA_survey_cls::getALU2D(TString bn){
 
 Int_t BSA_survey_cls::fillHist(TString hname, Float_t value){
   TH1D *h;
-  if (helic == -1) // positive helicity, it is flipped!
+  if (*helicity == -1) // positive helicity, it is flipped!
     ofile->GetObject("hp_"+ hname,h);
-  else if(helic == 1)// negative helicity, it is flipped!
+  else if(*helicity == 1)// negative helicity, it is flipped!
     ofile->GetObject("hn_"+ hname,h);
   else
     return 1;
@@ -319,11 +317,11 @@ Int_t BSA_survey_cls::fillHist(TString hname, Float_t value){
 
 Int_t BSA_survey_cls::fillHist2D(TString hname, Float_t x, Float_t y){
   TH2D *h;
-  if (helic == -1) { // positive helicity, it is flipped!
+  if (*helicity == -1) { // positive helicity, it is flipped!
     ofile->GetObject(hname + "_p",h);
     h->Fill(x,y);
   }
-  else if(helic == 1){ // negative helicity, it is flipped!
+  else if(*helicity == 1){ // negative helicity, it is flipped!
     ofile->GetObject(hname + "_n",h);
     h->Fill(x,-y);
   }
