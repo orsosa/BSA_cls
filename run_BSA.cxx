@@ -22,8 +22,7 @@ int main(int argc, char *argv[]){
   }
 
   std::cout<<"options: "<<opt<<std::endl;
-  std::cout<<"binning info file: "<<binfo<<std::endl;
-    
+  std::cout<<"binning info file: "<<binfo<<std::endl;   
   
   BSA_survey_cls t(argv[1],binfo,opt);
   t.Loop();

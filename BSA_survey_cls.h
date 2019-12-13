@@ -1105,10 +1105,15 @@ void BSA_survey_cls::Init(TChain *tree,TString binfo)
   OUTDIR = "";
   //// end setting address ///
   //// selecting helicity variable. ///
-   if (options.Contains("rgb"))
+  if (options.Contains("rgb"))
     helicity = &helonline_hel;
   else
     helicity = &helic;
+  
+  if (options.Contains("pi0"))
+    OUTDIR += "pi0"; 
+		
+   
  
    /////////// end setting helicity variable. ////
   ///// Setting bins and output dir ////

@@ -47,7 +47,6 @@ void BSA_survey_cls::Loop()
     h->Fill(npart);
     
     //    if (!(npart == 1)) continue;
-
     if ( !(DIS() && eFID_ec() && eFID_dc() && ePID()) ) continue;
     fillEvHistos();
     //    for (int k = 0; k<npart; k++){
