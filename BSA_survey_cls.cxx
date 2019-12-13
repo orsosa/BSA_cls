@@ -46,12 +46,14 @@ void BSA_survey_cls::Loop()
     ofile->GetObject("hNpair_all",h);
     h->Fill(npart);
     
-    if (!(npart == 1)) continue;
+    //    if (!(npart == 1)) continue;
 
     if ( !(DIS() && eFID_ec() && eFID_dc() && ePID()) ) continue;
     fillEvHistos();
-    for (int k = 0; k<npart; k++){
-      if ( !(FWD(k) && CF(k) && piFID_ec(k) && pipFID_dc(k) && pimFID_dc(k)) ) continue; // kin limits.
+    //    for (int k = 0; k<npart; k++){
+    for (int k = 0; k<1; k++){
+      
+      if ( !(FWD(k) && CF(k) && piFID_ec(k) && pipFID_dc(k) && pimFID_dc(k) && pi0PID(k)) ) continue; // kin limits.
       fillPartHistos(k);
       
       if (*helicity == -1) 
@@ -186,7 +188,15 @@ Bool_t BSA_survey_cls::eFID_ec()
 
 Bool_t BSA_survey_cls::piFID_ec(int k)
 {
-  return (20<det_pcal_lv[k][0])&&(20<det_pcal_lw[k][0])&&(20<det_pcal_lv[k][1])&&(20<det_pcal_lw[k][1]);
+  Bool_t fid1 = true;
+  if (options.Contains("pi0")){
+    fid1 = (20<det_pcal_lv[k][1])&&(20<det_pcal_lw[k][1])&&(20<det_pcal_lv[k][2])&&(20<det_pcal_lw[k][2]);;
+  }
+  else{
+    fid1 = (20<det_pcal_lv[k][1])&&(20<det_pcal_lw[k][1]);
+  }
+  
+  return (20<det_pcal_lv[k][0])&&(20<det_pcal_lw[k][0])&&fid1;
 }
 
 Bool_t BSA_survey_cls::eFID_dc()
@@ -206,12 +216,32 @@ Bool_t BSA_survey_cls::pimFID_dc(int k)
 
 Bool_t BSA_survey_cls::FWD(int k)
 {
-  return ( ((int)det_statPart[k][0]%4000)/2000 >= 1 ) && ( ((int)det_statPart[k][1]%4000)/2000 >= 1 );
+  bool fwd1 = true;
+  if (options.Contains("pi0")){
+    fwd1 = ( ((int)det_statPart[k][1]%4000)/2000 >= 1 )&&( ((int)det_statPart[k][2]%4000)/2000 >= 1 );
+  }
+  else{
+    fwd1 = ( ((int)det_statPart[k][1]%4000)/2000 >= 1 );
+  }
+  
+  return ( ((int)det_statPart[k][0]%4000)/2000 >= 1 ) && fwd1;
 }
 
 Bool_t BSA_survey_cls::CF(int k)
 {
-  return (xFm0[k]>0) && (xFm1[k]>0) && (pdata_e[k][0]/Nu>0.1) && (pdata_e[k][1]/Nu>0.1) && ((pdata_e[k][0] + pdata_e[k][1])/Nu<0.95);
+  Float_t xF_1 = -1111;
+  Float_t E_1 = -1111;
+  if (options.Contains("pi0")){
+    xF_1 = getxF(pdata_e[k][1] + pdata_e[k][2], pdata_px[k][1] + pdata_px[k][2], pdata_py[k][1] + pdata_py[k][2], pdata_pz[k][1] + pdata_pz[k][2]);
+    E_1 = (pdata_e[k][1] + pdata_e[k][2]);
+  }
+  else{
+    xF_1 = xFm1[k];
+    E_1 = pdata_e[k][1];
+  }
+  
+  
+  return (xFm0[k]>0) && (xF_1>0) && (pdata_e[k][0]/Nu>0.1) && (E_1/Nu>0.1) && ((pdata_e[k][0] + E_1)/Nu<0.95);
 
 }
 
@@ -421,4 +451,37 @@ Int_t BSA_survey_cls::setStyle(){
  
   
   return 0;
+}
+
+Bool_t BSA_survey_cls::pi0PID(Int_t k){
+  if (!options.Contains("pi0")) return kTRUE;
+  Float_t minth_brem = 10;
+  Float_t minE = 0.5;
+  Bool_t ret = true;
+  ret = ret && acos((pdata_px[k][1]*Pex + pdata_py[k][1]*Pey + pdata_pz[k][1]*Pez)/pdata_e[k][1]/(Nu/y-Nu))*TMath::RadToDeg()>minth_brem;
+  ret = ret && acos((pdata_px[k][2]*Pex + pdata_py[k][2]*Pey + pdata_pz[k][2]*Pez)/pdata_e[k][2]/(Nu/y-Nu))*TMath::RadToDeg()>minth_brem; 
+  ret = ret && (pdata_e[k][1]>minE)&&(pdata_e[k][2]>minE);
+  Float_t mpi0 = sqrt(2*(pdata_e[k][1]*pdata_e[k][2] - pdata_px[k][1]*pdata_px[k][2] - pdata_py[k][1]*pdata_py[k][2] - pdata_pz[k][1]*pdata_pz[k][2]));
+  ret = ret &&  0.104<mpi0&&mpi0<0.167;
+  return ret;
+}
+
+
+Float_t BSA_survey_cls::getxF(Float_t E, Float_t Px, Float_t Py, Float_t Pz){
+  Float_t kMprt = 0.93827;
+  Float_t kEbeam = Nu/y;
+  Float_t P2 = Px*Px + Py*Py + Pz*Pz;
+  Float_t cospq = ((kEbeam-Pez)*Pz - Pex*Px - Pey*Py)/( sqrt((Q2 + Nu*Nu)*P2) );
+  Float_t Pt2 = P2*(1-cospq*cospq);
+  Float_t Pl2 = P2*cospq*cospq;
+  Float_t Pl = sqrt(P2)*cospq;
+  ////// LORENTZ BOOST //////////
+  Float_t b=TMath::Sqrt(Q2 + Nu*Nu)/(Nu + kMprt);
+  Float_t g=(Nu + kMprt)/W;
+
+  Float_t PlCM = g*(Pl - b*E);
+      
+  Float_t xFm = 2*PlCM/W;
+  return xFm;
+
 }

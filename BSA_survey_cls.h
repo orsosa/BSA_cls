@@ -30,6 +30,7 @@
 #include "TCanvas.h"
 #include "TFile.h"
 #include "TTreeFormula.h"
+#include "TRegexp.h"
 
 // Header file for the classes stored in the TTree if any.
 #include "TClonesArray.h"
@@ -43,6 +44,7 @@ class BSA_survey_cls {
   TChain          *fChain;   //!pointer to the analyzed TTree or TChain
   Int_t           fCurrent; //!current Tree number in a TChain
   TStyle *myStyle;
+  TString options;
   // Fixed size dimensions of array or collections stored in the TTree if any.
   static constexpr Int_t kMaxdet = 400;
   static constexpr Int_t kMaxpdata = 400;
@@ -688,7 +690,7 @@ class BSA_survey_cls {
   TBranch        *b_mc_fV;   //!
   TBranch        *b_mc_fW;   //!
 
-  BSA_survey_cls(TString infile = "", TString binfo = "binning_info.txt",TString rg = "rgb");
+  BSA_survey_cls(TString infile = "", TString binfo = "binning_info.txt",TString opt = "");
   virtual ~BSA_survey_cls();
   virtual Int_t   Cut(Long64_t entry);
   virtual Bool_t  DIS();
@@ -700,10 +702,11 @@ class BSA_survey_cls {
   virtual Bool_t  pimFID_dc(int k = 0);
   virtual Bool_t  FWD(int k = 0);
   virtual Bool_t  CF(int k = 0);
+  virtual Bool_t  pi0PID(int k = 0);
   virtual Int_t   GetEntry(Long64_t entry);
   virtual Float_t getALU(TString hpname, TString hnname, TString pv, TString tv, Float_t &val, Float_t &err);
   virtual Float_t getALU2D(TString bn);
-    
+  virtual Float_t getxF(Float_t E, Float_t Px, Float_t Py, Float_t Pz);
   virtual Int_t   fillHist(TString hname, Float_t value = -111111);
   virtual Int_t   fillHist2D(TString hname, Float_t x, Float_t y);
   virtual Int_t   configHisto(TH1D *h, TString xtitle, TString ytitle,Color_t c = kBlack, EMarkerStyle ms = kFullDotLarge);
@@ -713,7 +716,7 @@ class BSA_survey_cls {
   virtual Int_t   fillEvHistos();
   virtual Int_t   fillPartHistos(int k = 0);
   virtual Long64_t LoadTree(Long64_t entry);
-  virtual void    Init(TChain *tree, TString binfo,TString rg);
+  virtual void    Init(TChain *tree, TString binfo);
   virtual void    Loop();
   virtual Bool_t  Notify();
   virtual void    Show(Long64_t entry = -1);
@@ -722,8 +725,9 @@ class BSA_survey_cls {
 #endif
 
 #ifdef BSA_survey_cls_cxx
-BSA_survey_cls::BSA_survey_cls(TString infile, TString binfo, TString rg) : fChain(0) 
+BSA_survey_cls::BSA_survey_cls(TString infile, TString binfo, TString opt) : fChain(0) 
 {
+  options = opt;
   TChain *tch = new TChain();
   // if parameter tree is not specified (or zero), connect the file
   // used to generate this class and read the Tree.
@@ -740,7 +744,7 @@ BSA_survey_cls::BSA_survey_cls(TString infile, TString binfo, TString rg) : fCha
   setStyle();
   LoadElecFIDPar();
 
-  Init(tch,binfo,rg);
+  Init(tch,binfo);
 }
 
 BSA_survey_cls::~BSA_survey_cls()
@@ -771,7 +775,7 @@ Long64_t BSA_survey_cls::LoadTree(Long64_t entry)
   return centry;
 }
 
-void BSA_survey_cls::Init(TChain *tree,TString binfo,TString rg)
+void BSA_survey_cls::Init(TChain *tree,TString binfo)
 {
   // The Init() function is called when the selector needs to initialize
   // a new tree or chain. Typically here the branch addresses and branch
@@ -1101,7 +1105,7 @@ void BSA_survey_cls::Init(TChain *tree,TString binfo,TString rg)
   OUTDIR = "";
   //// end setting address ///
   //// selecting helicity variable. ///
-   if (rg.Contains("rgb"))
+   if (options.Contains("rgb"))
     helicity = &helonline_hel;
   else
     helicity = &helic;
