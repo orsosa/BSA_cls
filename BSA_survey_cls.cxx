@@ -118,14 +118,14 @@ void BSA_survey_cls::Loop()
       ///// end phiR ////
       ///// ALU 0 ////
       getALU("hp_"+ hname0,"hn_"+ hname0, hname0, "#phi^{0}_{H}, (" + ttlsuf  + ")",val,err);
-      ofile->GetObject("hALU_" + hname0,h);
+      ofile->GetObject("hALU_phiH_0_" + bn,h);
       h->SetBinContent(k+1,val);
       h->SetBinError(k+1,err);
       configHisto(h,bn,"A_{LU}^{sin(#phi_{H})}",kBlack);
       //// end ALU 0 ////
       ///// ALU 1 ////
       getALU("hp_"+ hname1,"hn_"+ hname1, hname1, "#phi^{1}_{H}, (" + ttlsuf  + ")",val,err);
-      ofile->GetObject("hALU_" + hname1,h);
+      ofile->GetObject("hALU_phiH_1_" + bn,h);
       h->SetBinContent(k+1,val);
       h->SetBinError(k+1,err);
       configHisto(h,bn,"A_{LU}^{sin(#phi_{H})}",kBlack);
@@ -153,7 +153,6 @@ void BSA_survey_cls::Loop()
     halu->Draw();
     halu_s->Draw("same");
     ofile->Add(c);
-
     // drawing ALU 0
     ofile->GetObject("hpALU_phiH_0_" + bn,halu_0_p);
     ofile->GetObject("hnALU_phiH_0_" + bn,halu_0_n);
