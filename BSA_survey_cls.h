@@ -1182,29 +1182,37 @@ void BSA_survey_cls::Init(TChain *tree,TString binfo)
     TString bn = x.first;
     for (int k=0;k<x.second.size()-1;k++){
       TString hname = pltv + "_" + bn + Form("_b%d",k);
-      TString hnamepip = "phiH_" + bn + Form("_b%d",k);
+      TString hname0 = "phiH_0_" + bn + Form("_b%d",k);
+      TString hname1 = "phiH_1_" + bn + Form("_b%d",k);
       TString ttlsuf =  Form("%.2f<%s<%.2f",x.second[k], bn.Data(), x.second[k+1]);
       new TH1D("hp_"+ hname, "#pi^{+}#pi^{-} : " + ttlv + " (#lambda = +1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi);
       new TH1D("hn_"+ hname, "#pi^{+}#pi^{-} : " + ttlv + " (#lambda = -1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi);
 
-      new TH1D("hp_" + hnamepip,"#pi^{+} : #phi_{H} (#lambda = +1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi);
-      new TH1D("hn_" + hnamepip,"#pi^{+} : #phi_{H} (#lambda = -1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi);
+      new TH1D("hp_" + hname0,"#pi : #phi^{0}_{H} (#lambda = +1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi);
+      new TH1D("hn_" + hname0,"#pi : #phi^{0}_{H} (#lambda = -1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi);
+
+      new TH1D("hp_" + hname1,"#pi : #phi^{1}_{H} (#lambda = +1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi);
+      new TH1D("hn_" + hname1,"#pi : #phi^{1}_{H} (#lambda = -1, " + ttlsuf + ")",Nb_phi, min_phi, max_phi);
+
     }
 
     /// 2D histos ///
 
     new TH2D("hsin"+pltv + "_" + bn + "_p","sin(" + ttlv +") vs " + bn,x.second.size()-1,x.second.data(),300,-1,1);
     new TH2D("hsin"+pltv + "_" + bn + "_n","sin(" + ttlv +") vs " + bn,x.second.size()-1,x.second.data(),300,-1,1);
-    new TH2D("hsinphiH_" + bn + "_p","sin(#phi_{H}) vs " + bn,x.second.size()-1,x.second.data(),300,-1,1);
-    new TH2D("hsinphiH_" + bn + "_n","sin(#phi_{H}) vs " + bn,x.second.size()-1,x.second.data(),300,-1,1);
+    new TH2D("hsinphiH_0_" + bn + "_p","sin(#phi^{0}_{H}) vs " + bn,x.second.size()-1,x.second.data(),300,-1,1);
+    new TH2D("hsinphiH_0_" + bn + "_n","sin(#phi^{0}_{H}) vs " + bn,x.second.size()-1,x.second.data(),300,-1,1);
+    new TH2D("hsinphiH_1_" + bn + "_p","sin(#phi^{1}_{H}) vs " + bn,x.second.size()-1,x.second.data(),300,-1,1);
+    new TH2D("hsinphiH_1_" + bn + "_n","sin(#phi^{1}_{H}) vs " + bn,x.second.size()-1,x.second.data(),300,-1,1);
     
     /// end 2D histos ////
 
     /// ALU histos
     std::cout<<bn<<" : "<<brv[bn]->GetExpFormula()<<std::endl;
 
-    new TH1D("hALU_"+pltv + "_" + bn,"ALU^{sin(" + ttlv+ ")}",x.second.size()-1,x.second.data());
-    new TH1D("hALU_phiH_" + bn,"ALU^{sin(#phi_{H})}",x.second.size()-1,x.second.data());
+    new TH1D("hALU_"+ pltv + "_" + bn,"ALU^{sin(" + ttlv+ ")}",x.second.size()-1,x.second.data());
+    new TH1D("hALU_phiH_0_" + bn,"ALU^{sin(#phi^{0}_{H})}",x.second.size()-1,x.second.data());
+    new TH1D("hALU_phiH_1_" + bn,"ALU^{sin(#phi^{1}_{H})}",x.second.size()-1,x.second.data());
 
     /// end ALU histos
     

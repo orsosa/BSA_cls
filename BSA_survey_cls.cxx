@@ -71,16 +71,20 @@ void BSA_survey_cls::Loop()
 	brv[bn]->GetNdata();
 	for (int n=0;n<x.second.size()-1;n++){
 	  TString hname = pltv + "_" + bn + Form("_b%d",n);
-	  TString hnamepip = "phiH_" + bn + Form("_b%d",n);
+	  TString hname0 = "phiH_0_" + bn + Form("_b%d",n);
+	  TString hname1 = "phiH_1_" + bn + Form("_b%d",n);
 	  TString hsin = "hsin" + pltv + "_" + bn;
-	  TString hsinpip = "hsinphiH_" + bn;
+	  TString hsin0 = "hsinphiH_0_" + bn;
+	  TString hsin1 = "hsinphiH_1_" + bn;
 	  TString ttlsuf =  Form("%.2f<%s<%.2f",x.second[n], bn.Data(), x.second[n+1]);
 
 	  if (x.second[n] < brv[bn]->EvalInstance(k) && brv[bn]->EvalInstance(k)< x.second[n+1]){
-	    fillHist(hnamepip,pdata_phiHs[k][0]);
+	    fillHist(hname0,pdata_phiHs[k][0]);
+	    fillHist(hname1,pdata_phiHs[k][1]);
 	    fillHist(hname,phiR[k]);
 	    fillHist2D(hsin, brv[bn]->EvalInstance(k), sin(phiR[k]*TMath::DegToRad()));
-	    fillHist2D(hsinpip, brv[bn]->EvalInstance(k), sin(pdata_phiHs[k][0]*TMath::DegToRad()));
+	    fillHist2D(hsin0, brv[bn]->EvalInstance(k), sin(pdata_phiHs[k][0]*TMath::DegToRad()));
+	    fillHist2D(hsin1, brv[bn]->EvalInstance(k), sin(pdata_phiHs[k][1]*TMath::DegToRad()));
 
 	    break;
 	  }
@@ -102,7 +106,8 @@ void BSA_survey_cls::Loop()
     TString bn = x.first;
     for (int k=0;k<x.second.size()-1;k++){
       TString hname = pltv + "_" + bn + Form("_b%d",k);
-      TString hnamepip = "phiH_" + bn + Form("_b%d",k);
+      TString hname0 = "phiH_0_" + bn + Form("_b%d",k);
+      TString hname1 = "phiH_1_" + bn + Form("_b%d",k);
       TString ttlsuf =  Form("%.2f<%s<%.2f",x.second[k], bn.Data(), x.second[k+1]);
       //// ALU pltv ////
       getALU("hp_"+ hname,"hn_"+ hname, hname, ttlv + ", (" + ttlsuf + ")",val,err);
@@ -110,55 +115,87 @@ void BSA_survey_cls::Loop()
       h->SetBinContent(k+1,val);
       h->SetBinError(k+1,err);
       configHisto(h,bn,"A_{LU}^{sin(" + ttlv + ")}",kBlack);
-      ///// end pip ////
-      ///// ALU pip ////
-      getALU("hp_"+ hnamepip,"hn_"+ hnamepip, hnamepip, "#phi_{H}, (" + ttlsuf  + ")",val,err);
-      ofile->GetObject("hALU_phiH_" + bn,h);
+      ///// end phiR ////
+      ///// ALU 0 ////
+      getALU("hp_"+ hname0,"hn_"+ hname0, hname0, "#phi^{0}_{H}, (" + ttlsuf  + ")",val,err);
+      ofile->GetObject("hALU_" + hname0,h);
       h->SetBinContent(k+1,val);
       h->SetBinError(k+1,err);
       configHisto(h,bn,"A_{LU}^{sin(#phi_{H})}",kBlack);
-      //// end ALU pip ////
+      //// end ALU 0 ////
+      ///// ALU 1 ////
+      getALU("hp_"+ hname1,"hn_"+ hname1, hname1, "#phi^{1}_{H}, (" + ttlsuf  + ")",val,err);
+      ofile->GetObject("hALU_" + hname1,h);
+      h->SetBinContent(k+1,val);
+      h->SetBinError(k+1,err);
+      configHisto(h,bn,"A_{LU}^{sin(#phi_{H})}",kBlack);
+      //// end ALU 1 ////
+            
     }
-    TH1D *halu_p, *halu_n, *halu_s, *halu, *halu_pip_p, *halu_pip_n, *halu_pip_s, *halu_pip;
+    TH1D *halu_p, *halu_n, *halu_s, *halu, *halu_0_p, *halu_0_n, *halu_0_s, *halu_0, *halu_1_p, *halu_1_n, *halu_1_s, *halu_1;
     getALU2D(bn);
+    ofile->ls();
     ofile->GetObject("hpALU_"+ pltv + "_" + bn,halu_p);
     ofile->GetObject("hnALU_"+ pltv + "_" + bn,halu_n);
     ofile->GetObject("hsALU_"+ pltv + "_" + bn,halu_s);
-    ofile->GetObject("hpALU_phiH_" + bn,halu_pip_p);
-    ofile->GetObject("hnALU_phiH_" + bn,halu_pip_n);
-    ofile->GetObject("hsALU_phiH_" + bn,halu_pip_s);
     ofile->GetObject("hALU_"+pltv + "_" + bn,halu);
-    ofile->GetObject("hALU_phiH_" + bn,halu_pip);
     halu_p->GetYaxis()->SetRangeUser(minALU,maxALU);
     halu_n->GetYaxis()->SetRangeUser(minALU,maxALU);
     halu_s->GetYaxis()->SetRangeUser(minALU,maxALU);
-    halu_pip_p->GetYaxis()->SetRangeUser(minALU,maxALU);
-    halu_pip_n->GetYaxis()->SetRangeUser(minALU,maxALU);
-    halu_pip_s->GetYaxis()->SetRangeUser(minALU,maxALU);
     halu->GetYaxis()->SetRangeUser(minALU,maxALU);
-    halu_pip->GetYaxis()->SetRangeUser(minALU,maxALU);
-    TCanvas *c = new TCanvas("can_pip_"+ bn + "_all","can_pip_"+bn,800,600);
-    halu_pip->Draw();
-    halu_pip_p->Draw("same");
-    halu_pip_n->Draw("same");
-    halu_pip_s->Draw("same");
-    ofile->Add(c);
-    c = new TCanvas("can_"+ bn + "_all","can_"+bn,800,600);
+    TCanvas *c = new TCanvas("can_"+ bn + "_all","can_"+bn,800,600);
     halu->Draw();
     halu_p->Draw("same");
     halu_n->Draw("same");
     halu_s->Draw("same");
     ofile->Add(c);
-    /// only sum and fit estimations.
-    c = new TCanvas("can_pip_"+ bn,"can_pip_"+bn,800,600);
-    halu_pip->Draw();
-    halu_pip_s->Draw("same");
-    ofile->Add(c);
     c = new TCanvas("can_"+ bn,"can_"+bn,800,600);
     halu->Draw();
     halu_s->Draw("same");
     ofile->Add(c);
-  
+
+    // drawing ALU 0
+    ofile->GetObject("hpALU_phiH_0_" + bn,halu_0_p);
+    ofile->GetObject("hnALU_phiH_0_" + bn,halu_0_n);
+    ofile->GetObject("hsALU_phiH_0_" + bn,halu_0_s);
+    ofile->GetObject("hALU_phiH_0_" + bn,halu_0);
+    halu_0_p->GetYaxis()->SetRangeUser(minALU,maxALU);
+    halu_0_n->GetYaxis()->SetRangeUser(minALU,maxALU);
+    halu_0_s->GetYaxis()->SetRangeUser(minALU,maxALU);
+    halu_0->GetYaxis()->SetRangeUser(minALU,maxALU);
+    c = new TCanvas("can_0_"+ bn + "_all","can_0_"+bn,800,600);
+    halu_0->Draw();
+    halu_0_p->Draw("same");
+    halu_0_n->Draw("same");
+    halu_0_s->Draw("same");
+    ofile->Add(c);
+    /// only sum and fit estimations.
+    c = new TCanvas("can_0_"+ bn,"can_0_"+bn,800,600);
+    halu_0->Draw();
+    halu_0_s->Draw("same");
+    ofile->Add(c);
+    // end  drawing ALU 0
+    // drawing ALU 1
+    ofile->GetObject("hpALU_phiH_1_" + bn,halu_1_p);
+    ofile->GetObject("hnALU_phiH_1_" + bn,halu_1_n);
+    ofile->GetObject("hsALU_phiH_1_" + bn,halu_1_s);
+    ofile->GetObject("hALU_phiH_1_" + bn,halu_1);
+    halu_1_p->GetYaxis()->SetRangeUser(minALU,maxALU);
+    halu_1_n->GetYaxis()->SetRangeUser(minALU,maxALU);
+    halu_1_s->GetYaxis()->SetRangeUser(minALU,maxALU);
+    halu_1->GetYaxis()->SetRangeUser(minALU,maxALU);
+    c = new TCanvas("can_1_"+ bn + "_all","can_1_"+bn,800,600);
+    halu_1->Draw();
+    halu_1_p->Draw("same");
+    halu_1_n->Draw("same");
+    halu_1_s->Draw("same");
+    ofile->Add(c);
+    /// only sum and fit estimations.
+    c = new TCanvas("can_1_"+ bn,"can_1_"+bn,800,600);
+    halu_1->Draw();
+    halu_1_s->Draw("same");
+    ofile->Add(c);
+    // end  drawing ALU 1
     
   }
   
@@ -299,18 +336,18 @@ Float_t BSA_survey_cls::getALU2D(TString bn){
     
   ///// end pltv /////
 
-  ////  phiH ////
-  psname = "hsinphiH_" + bn + "_p";
-  nsname = "hsinphiH_" + bn + "_n";
+  ////  phiH 0 ////
+  psname = "hsinphiH_0_" + bn + "_p";
+  nsname = "hsinphiH_0_" + bn + "_n";
   ofile->GetObject(psname,hp);
   ofile->GetObject(nsname,hn);
 
   hp->Sumw2();
   hn->Sumw2();
 
-  halup = (TH1D*)hp->ProfileX("hpALU_phiH_" + bn);
-  halun = (TH1D*)hn->ProfileX("hnALU_phiH_" + bn);
-  halus = (TH1D*)halup->Clone("hsALU_phiH_" + bn);
+  halup = (TH1D*)hp->ProfileX("hpALU_phiH_0_" + bn);
+  halun = (TH1D*)hn->ProfileX("hnALU_phiH_0_" + bn);
+  halus = (TH1D*)halup->Clone("hsALU_phiH_0_" + bn);
   halup->Scale(2.);
   halun->Scale(2.);
   
@@ -325,7 +362,34 @@ Float_t BSA_survey_cls::getALU2D(TString bn){
   configHisto(halus,bn,"A_{LU}(#sum<sin(#phi_{H})>^{+/-})",kMagenta+1,kFullStar);
   
   
-  ///// end phiH /////
+  ///// end phiH 0 /////
+
+  ////  phiH 1 ////
+  psname = "hsinphiH_1_" + bn + "_p";
+  nsname = "hsinphiH_1_" + bn + "_n";
+  ofile->GetObject(psname,hp);
+  ofile->GetObject(nsname,hn);
+
+  hp->Sumw2();
+  hn->Sumw2();
+
+  halup = (TH1D*)hp->ProfileX("hpALU_phiH_1_" + bn);
+  halun = (TH1D*)hn->ProfileX("hnALU_phiH_1_" + bn);
+  halus = (TH1D*)halup->Clone("hsALU_phiH_1_" + bn);
+  halup->Scale(2.);
+  halun->Scale(2.);
+  
+  halus->Add(halup,halun,0.5,0.5);
+
+  halup->SetTitle("2<sin(#phi_{H})>^{+}");
+  halun->SetTitle("-2<sin(#phi_{H})>^{-}");
+  halus->SetTitle("(<sin(#phi_{H})>^{+} - <sin(#phi_{H})>^{-})");
+
+  configHisto(halup,bn,"A_{LU}(<sin(#phi_{H})>^{+})",kRed,kFullTriangleUp);
+  configHisto(halun,bn,"A_{LU}(<sin(#phi_{H})>^{-})",kGreen+3,kFullTriangleDown);
+  configHisto(halus,bn,"A_{LU}(#sum<sin(#phi_{H})>^{+/-})",kMagenta+1,kFullStar);
+  
+  ///// end phiH 1 /////
 
   return 0;
 }
