@@ -34,7 +34,7 @@ void BSA_survey_cls::Loop()
   std::cout<<"processing...\n";
   std::cout.fill('.');
   std::cout<<"# trees to be processed: "<<fChain->GetNtrees()<<std::endl;
-  
+
   Long64_t nentries = fChain->GetEntries();
 
   Long64_t nbytes = 0, nb = 0;
@@ -50,8 +50,8 @@ void BSA_survey_cls::Loop()
     if ( !(DIS() && eFID_ec() && eFID_dc() && ePID()) ) continue;
     fillEvHistos();
     //    for (int k = 0; k<npart; k++){
-    for (int k = 0; k<1; k++){
-      
+    for (int k = 0; k<1; k++){ // only first pair
+     
       if ( !(FWD(k) && CF(k) && piFID_ec(k) && pipFID_dc(k) && pimFID_dc(k) && pi0PID(k)) ) continue; // kin limits.
       fillPartHistos(k);
       

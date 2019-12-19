@@ -1142,8 +1142,7 @@ void BSA_survey_cls::Init(TChain *tree,TString binfo)
     std::cout<<bn<<" : "<<bfrm<<"\t";
     brv[bn] = new TTreeFormula(bn,bfrm,fChain);
     fChain->SetNotify(brv[bn]);
-    //    brv[bn] = (Float_t *)(fChain->GetBranch(bn))->GetAddress();
-
+    //brv[bn] = (Float_t *)(fChain->GetBranch(bn))->GetAddress();
     OUTDIR += bn.ReplaceAll("(","_").ReplaceAll(")","_");
     while(line.Tokenize(tok,from)){
       bedg[bn].push_back(atof(tok));
@@ -1275,6 +1274,10 @@ Int_t BSA_survey_cls::initKinHistos(){
   configHisto(h,"pT_{#pi^{+}} GeV","dN/dpt");
   h = new TH1D("hpT1","#pi^{-} : pT",Nbins,0,1.2);
   configHisto(h,"pT_{#pi^{-}} GeV","dN/dpt");
+
+  h2 = new TH2D("hz0z1","z0 vs z1",Nbins,0.0,1,Nbins,0.0,1);
+  h2->GetXaxis()->SetTitle("z1");
+  h2->GetYaxis()->SetTitle("z0");
   
   h2 = new TH2D("hQ2x","Q2 vs x",Nbins,0.04,1,Nbins,0.95,10);
   h2->GetXaxis()->SetTitle("x");
@@ -1324,12 +1327,16 @@ Int_t BSA_survey_cls::fillPartHistos(int k){
   h->Fill(pdata_e[k][0]/Nu);
   ofile->GetObject("hz1",h);
   h->Fill(pdata_e[k][1]/Nu);
+  ofile->GetObject("hz0z1",h2);
+  h2->Fill(pdata_e[k][1]/Nu,pdata_e[k][0]/Nu);
   ofile->GetObject("hpT",h);
   h->Fill(sqrt(Pt2[k]));
   ofile->GetObject("hpT0",h);
   h->Fill(sqrt(p0T2[k]));
   ofile->GetObject("hpT1",h);
   h->Fill(sqrt(p1T2[k]));
+
+  
 
   return 0;
 
