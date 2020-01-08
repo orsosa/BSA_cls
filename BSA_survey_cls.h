@@ -702,6 +702,7 @@ class BSA_survey_cls {
   virtual Bool_t  pimFID_dc(int k = 0);
   virtual Bool_t  FWD(int k = 0);
   virtual Bool_t  CF(int k = 0);
+  virtual Bool_t  minEnergy(int k = 0);
   virtual Bool_t  pi0PID(int k = 0);
   virtual Int_t   GetEntry(Long64_t entry);
   virtual Float_t getALU(TString hpname, TString hnname, TString pv, TString tv, Float_t &val, Float_t &err);

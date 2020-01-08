@@ -52,7 +52,7 @@ void BSA_survey_cls::Loop()
     //    for (int k = 0; k<npart; k++){
     for (int k = 0; k<1; k++){ // only first pair
      
-      if ( !(FWD(k) && CF(k) && piFID_ec(k) && pipFID_dc(k) && pimFID_dc(k) && pi0PID(k)) ) continue; // kin limits.
+      if ( !(FWD(k) && CF(k) && minEnergy(k) && piFID_ec(k) && pipFID_dc(k) && pimFID_dc(k) && pi0PID(k)) ) continue; // kin limits.
       fillPartHistos(k);
       
       if (*helicity == -1) 
@@ -134,7 +134,7 @@ void BSA_survey_cls::Loop()
     }
     TH1D *halu_p, *halu_n, *halu_s, *halu, *halu_0_p, *halu_0_n, *halu_0_s, *halu_0, *halu_1_p, *halu_1_n, *halu_1_s, *halu_1;
     getALU2D(bn);
-    ofile->ls();
+    //    ofile->ls();
     ofile->GetObject("hpALU_"+ pltv + "_" + bn,halu_p);
     ofile->GetObject("hnALU_"+ pltv + "_" + bn,halu_n);
     ofile->GetObject("hsALU_"+ pltv + "_" + bn,halu_s);
@@ -277,8 +277,23 @@ Bool_t BSA_survey_cls::CF(int k)
   
   
   return (xFm0[k]>0) && (xF_1>0) && (pdata_e[k][0]/Nu>0.1) && (E_1/Nu>0.1) && ((pdata_e[k][0] + E_1)/Nu<0.95);
-
 }
+
+Bool_t BSA_survey_cls::minEnergy(int k)
+{
+  Float_t xF_1 = -1111;
+  Float_t E_1 = -1111;
+  if (options.Contains("pi0")){
+    E_1 = (pdata_e[k][1] + pdata_e[k][2]);
+  }
+  else{
+    E_1 = pdata_e[k][1];
+  }
+  
+  
+  return (pdata_e[k][0]>1.0) && (E_1>1.0);
+}
+
 
 Float_t BSA_survey_cls::getALU(TString hpname, TString hnname, TString pv, TString tv, Float_t &val, Float_t &err){
   TH1D *hp,*hn, *hs, *hm, *hALU;
